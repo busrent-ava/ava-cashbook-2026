@@ -1,0 +1,1919 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b3d3a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="AVA Cash">
+<title>AVA Cash Book</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<style>
+:root{
+  --paper:#edf1ef;--card:#ffffff;--card2:#f5f8f7;--ink:#0f1f1d;--mu:#5b6b67;--line:#d6dfdc;
+  --teal:#0b3d3a;--teal2:#14605a;--tealx:#0e4a46;--brass:#c8922e;--brass2:#f3e3c2;
+  --in:#17784a;--inbg:#e3f3ea;--out:#b33d27;--outbg:#f8e6e1;--xf:#3b5bb5;--xfbg:#e5eaf8;
+  --r:14px;--sh:0 1px 2px rgba(10,40,36,.06),0 6px 18px rgba(10,40,36,.06);
+  color-scheme:light;
+}
+:root[data-theme="dark"]{
+  --paper:#0a1413;--card:#122120;--card2:#172928;--ink:#e4eeeb;--mu:#8ea29d;--line:#233533;
+  --teal:#08292a;--teal2:#1c7a72;--tealx:#0c3533;--brass:#dcaa4f;--brass2:#3a2f19;
+  --in:#3ec27f;--inbg:#12302a;--out:#ef7a5f;--outbg:#3a1f1a;--xf:#86a2f0;--xfbg:#1b2546;
+  --sh:none;color-scheme:dark;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{background:var(--paper)}
+body{background:var(--paper);color:var(--ink);font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue","Noto Sans","Noto Naskh Arabic",sans-serif;
+  padding-bottom:calc(86px + env(safe-area-inset-bottom,0px));min-height:100vh;font-variant-numeric:tabular-nums}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
+
+/* ---------- header ---------- */
+.top{position:sticky;top:0;z-index:10;background:var(--teal);color:#fff;padding:calc(10px + env(safe-area-inset-top,0px)) 16px 10px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.brand{display:flex;align-items:baseline;gap:8px;font-weight:600;letter-spacing:.01em}
+.mark{font-family:Georgia,"Times New Roman",serif;font-weight:700;font-size:20px;letter-spacing:.14em;color:var(--brass)}
+.brand span+span{font-size:15px;opacity:.92}
+.pill{display:flex;align-items:center;gap:7px;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.07);color:#fff;border-radius:99px;padding:6px 12px;font-size:12.5px;white-space:nowrap}
+.dot{width:8px;height:8px;border-radius:50%;background:#7fd4a8;flex:0 0 auto}
+.pill.wait .dot{background:var(--brass)}.pill.off .dot{background:#9aa9a6}.pill.err .dot{background:#ff8a70}
+.pill.busy .dot{animation:pulse 1s infinite}
+@keyframes pulse{50%{opacity:.25}}
+
+main{max-width:780px;margin:0 auto;padding:0 14px}
+.v{display:none}.v.on{display:block}
+
+/* ---------- passbook band ---------- */
+.pass{margin:0 -14px 14px;padding:16px 18px 18px;color:#fff;background:
+  repeating-linear-gradient(180deg,transparent 0 27px,rgba(255,255,255,.045) 27px 28px),
+  linear-gradient(180deg,var(--teal),var(--tealx));border-bottom:3px solid var(--brass)}
+.pl{font-size:12px;text-transform:uppercase;letter-spacing:.12em;opacity:.7}
+.big{font-size:32px;font-weight:700;letter-spacing:-.01em;margin:2px 0 14px}
+.big small{font-size:15px;font-weight:600;opacity:.65;margin-right:6px}
+.accs{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.acc{text-align:left;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.06);color:#fff;border-radius:12px;padding:11px 12px}
+.acc span{display:block;font-size:12px;opacity:.75}
+.acc b{display:block;font-size:19px;margin-top:2px}
+.neg{color:#ffb4a3!important}
+
+/* ---------- quick actions ---------- */
+.qa{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px}
+.qa button{border:0;border-radius:12px;padding:13px 6px;font-weight:650;font-size:14.5px;display:flex;flex-direction:column;align-items:center;gap:3px;box-shadow:var(--sh)}
+.qa svg{width:22px;height:22px}
+.qa .in{background:var(--inbg);color:var(--in)}.qa .out{background:var(--outbg);color:var(--out)}.qa .xf{background:var(--xfbg);color:var(--xf)}
+
+/* ---------- cards ---------- */
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin-bottom:12px;box-shadow:var(--sh)}
+.h{font-weight:650;font-size:15px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.h a,.lnk{color:var(--teal2);font-weight:600;font-size:13px;text-decoration:none;background:none;border:0}
+:root[data-theme="dark"] .h a,:root[data-theme="dark"] .lnk{color:var(--brass)}
+.sub{color:var(--mu);font-size:12.5px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.grid3>div,.grid2>div{background:var(--card2);border-radius:10px;padding:10px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.grid3 span,.grid2 span{display:block;font-size:11.5px;color:var(--mu)}
+.grid3 b,.grid2 b{font-size:15px}
+.cin{color:var(--in)}.cout{color:var(--out)}.cxf{color:var(--xf)}
+.kv{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px dashed var(--line);gap:10px}
+.kv:last-child{border-bottom:0}.kv b{white-space:nowrap}
+.kv.tot{border-top:1px solid var(--ink);border-bottom:0;margin-top:2px;font-weight:700}
+
+/* bars */
+.bar-row{margin-bottom:9px}
+.bar-row .t{display:flex;justify-content:space-between;font-size:13.5px;gap:8px}
+.bar{height:7px;border-radius:4px;background:var(--card2);margin-top:4px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--out);border-radius:4px}
+.bar.g i{background:var(--in)}.bar.b i{background:var(--brass)}
+
+/* ---------- entries list ---------- */
+.list{display:flex;flex-direction:column}
+.day{font-size:12px;font-weight:650;color:var(--mu);text-transform:uppercase;letter-spacing:.06em;padding:12px 2px 6px;display:flex;justify-content:space-between}
+.it{display:flex;align-items:center;gap:11px;width:100%;text-align:left;background:var(--card);border:0;border-bottom:1px solid var(--line);padding:11px 4px}
+.card .it{background:transparent}
+.it:last-child{border-bottom:0}
+.ic{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;flex:0 0 auto;font-weight:700;font-size:16px}
+.ic.in{background:var(--inbg);color:var(--in)}.ic.out{background:var(--outbg);color:var(--out)}.ic.xf{background:var(--xfbg);color:var(--xf)}
+.mid{flex:1;min-width:0}
+.mid b{display:block;font-weight:600;font-size:14.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mid small{display:block;color:var(--mu);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.amt{text-align:right;font-weight:700;font-size:14.5px;white-space:nowrap}
+.amt small{display:block;font-weight:500;font-size:11.5px;color:var(--mu)}
+.amt.in{color:var(--in)}.amt.out{color:var(--out)}.amt.xf{color:var(--xf)}
+.flag{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--brass);margin-left:5px;vertical-align:middle}
+.bookwrap{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:0 12px;box-shadow:var(--sh)}
+.bookwrap .day{border-bottom:1px solid var(--line)}
+.sumbar{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 0 10px}
+.sumbar div{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+.sumbar span{display:block;font-size:11px;color:var(--mu)}.sumbar b{font-size:14px}
+.empty{color:var(--mu);text-align:center;padding:26px 10px;font-size:14px}
+
+/* ---------- forms ---------- */
+label{font-size:12.5px;color:var(--mu);display:block;margin:0 0 4px;font-weight:550}
+input,select,textarea{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;background:var(--card2);margin-bottom:11px;min-height:44px}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--teal2);outline-offset:-1px;background:var(--card)}
+.row{display:flex;gap:9px}.row>*{flex:1;min-width:0}
+.btn{border:0;border-radius:11px;padding:12px 16px;font-weight:650;font-size:14.5px;background:var(--teal);color:#fff;min-height:46px}
+:root[data-theme="dark"] .btn{background:var(--teal2)}
+.btn.w{width:100%}.btn.g{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn.r{background:var(--out);color:#fff}.btn.ok{background:var(--in);color:#fff}.btn.br{background:var(--brass);color:#1c1405}
+.btn:disabled{opacity:.5}
+.chips{display:flex;gap:6px;overflow-x:auto;margin-bottom:10px;padding-bottom:2px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{border:1px solid var(--line);background:var(--card);color:var(--mu);border-radius:99px;padding:7px 13px;font-size:13px;white-space:nowrap;min-height:34px}
+.chip.on{background:var(--teal);border-color:var(--teal);color:#fff}
+:root[data-theme="dark"] .chip.on{background:var(--teal2);border-color:var(--teal2)}
+.chips.w{flex-wrap:wrap;overflow:visible}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);background:var(--card2);border-radius:12px;padding:4px;margin-bottom:14px;gap:4px}
+.seg button{border:0;background:none;border-radius:9px;padding:10px 4px;font-weight:650;color:var(--mu)}
+.seg button.on.in{background:var(--in);color:#fff}.seg button.on.out{background:var(--out);color:#fff}.seg button.on.xf{background:var(--xf);color:#fff}
+.amtin{font-size:28px;font-weight:700;text-align:right;padding:12px 14px;letter-spacing:-.01em}
+.hint{color:var(--mu);font-size:12.5px;margin:-6px 0 11px}
+.note{font-size:12.5px;color:var(--mu);background:var(--card2);border-radius:10px;padding:10px 12px;margin:8px 0}
+.note.warn{background:var(--brass2);color:var(--ink)}
+.filebox{border:1.5px dashed var(--line);border-radius:12px;padding:12px;margin-bottom:12px;display:flex;align-items:center;gap:10px}
+.filebox .btn{min-height:40px;padding:9px 12px;font-size:13.5px}
+.filebox span{flex:1;min-width:0;font-size:13px;color:var(--mu);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+details.more{margin-bottom:10px}
+details.more summary{cursor:pointer;color:var(--teal2);font-weight:600;font-size:13.5px;padding:6px 0 10px;list-style:none}
+:root[data-theme="dark"] details.more summary{color:var(--brass)}
+details.more summary::-webkit-details-marker{display:none}
+
+/* ---------- nav ---------- */
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:10;background:var(--card);border-top:1px solid var(--line);display:flex;padding:6px 4px calc(6px + env(safe-area-inset-bottom,0px))}
+nav.tabs button{flex:1;border:0;background:none;color:var(--mu);font-size:11.5px;font-weight:600;padding:5px 2px;display:flex;flex-direction:column;align-items:center;gap:2px}
+nav.tabs svg{width:22px;height:22px}
+nav.tabs button.on{color:var(--teal2)}
+:root[data-theme="dark"] nav.tabs button.on{color:var(--brass)}
+.fab{position:fixed;right:16px;bottom:calc(76px + env(safe-area-inset-bottom,0px));width:58px;height:58px;border-radius:18px;border:0;background:var(--brass);color:#1c1405;z-index:11;box-shadow:0 6px 18px rgba(0,0,0,.25);display:grid;place-items:center}
+.fab svg{width:28px;height:28px}
+
+/* ---------- sheets / overlays ---------- */
+.ov{position:fixed;inset:0;background:rgba(5,20,18,.55);display:none;align-items:flex-end;justify-content:center;z-index:30}
+.ov.on{display:flex}
+.sheet{background:var(--card);width:100%;max-width:580px;border-radius:20px 20px 0 0;padding:14px 16px calc(18px + env(safe-area-inset-bottom,0px));max-height:94vh;overflow-y:auto;animation:up .18s ease-out}
+@keyframes up{from{transform:translateY(30px);opacity:.6}}
+.grab{width:40px;height:4px;border-radius:2px;background:var(--line);margin:0 auto 10px}
+@media(min-width:700px){.ov{align-items:center}.sheet{border-radius:20px}}
+.toast{position:fixed;left:50%;bottom:calc(150px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:10px 16px;border-radius:12px;font-size:14px;z-index:50;opacity:0;pointer-events:none;transition:opacity .2s;max-width:90vw;text-align:center}
+.toast.on{opacity:1}
+
+/* PIN */
+.lock{position:fixed;inset:0;z-index:60;background:var(--teal);color:#fff;display:none;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:20px}
+.lock.on{display:flex}
+.lock .mark{font-size:34px}
+.pins{display:flex;gap:14px;height:16px}
+.pins i{width:14px;height:14px;border-radius:50%;border:2px solid rgba(255,255,255,.6)}
+.pins i.f{background:var(--brass);border-color:var(--brass)}
+.pad{display:grid;grid-template-columns:repeat(3,72px);gap:14px}
+.pad button{height:72px;border-radius:50%;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.06);color:#fff;font-size:26px;font-weight:500}
+.pad button.x{border:0;background:none;font-size:15px}
+.lock .msg{min-height:20px;font-size:14px;color:#ffd3c7}
+
+.listset .li{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-top:1px solid var(--line);gap:8px}
+.sel-s{padding:7px 10px;min-height:36px;margin:0;width:auto;font-size:13px}
+
+/* ---------- print (reports) ---------- */
+.print-only{display:none}
+@media print{
+  @page{size:A4;margin:14mm}
+  body{background:#fff;color:#000;padding:0;font-size:12px}
+  .top,nav.tabs,.fab,.noprint,.toast,.ov{display:none!important}
+  .v{display:none!important}#v-rep{display:block!important}
+  .card{box-shadow:none;border:1px solid #bbb;break-inside:avoid}
+  .print-only{display:block}
+  main{max-width:none;padding:0}
+  .cin,.cout{color:#000}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* fleet */
+.badge{display:inline-block;font-size:11.5px;font-weight:650;border-radius:99px;padding:2px 8px;margin:3px 4px 0 0;white-space:nowrap}
+.badge.ok{background:var(--inbg);color:var(--in)}.badge.soon{background:var(--brass2);color:#7a5410}.badge.bad{background:var(--outbg);color:var(--out)}
+:root[data-theme="dark"] .badge.soon{color:var(--brass)}
+.veh{border-top:1px solid var(--line);padding:10px 0;display:flex;gap:10px;align-items:flex-start;width:100%;text-align:left;background:none;border-left:0;border-right:0;border-bottom:0}
+.veh .mid b{white-space:normal}.veh .mid small{white-space:normal}
+.alert{border-color:var(--out)!important}
+.alert .kv span{min-width:0}
+textarea{min-height:140px;font-size:13px;font-family:ui-monospace,Menlo,Consolas,monospace}
+
+/* v3 */
+.qa.q4{grid-template-columns:repeat(4,1fr);gap:7px}
+.qa.q4 button{font-size:13px;padding:12px 4px}
+.qa .pvb{background:var(--brass2);color:#6b4a0c}
+:root[data-theme="dark"] .qa .pvb{color:var(--brass)}
+.accx{display:block;font-size:11.5px;opacity:.78;margin-top:3px}
+nav.tabs button{font-size:11px}
+.pvline{border:1px solid var(--line);border-radius:12px;padding:10px 10px 0;margin-bottom:10px;background:var(--card)}
+.pvline input{margin-bottom:9px}
+.pvline label{font-size:11.5px}
+.pvtot{background:var(--card2);border-radius:12px;padding:10px 12px;margin:2px 0 12px}
+.pvwrap{border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-bottom:12px;background:#fff}
+.pvdoc{background:#fff;color:#2b2b2b;padding:22px 18px;font:12px/1.4 Arial,Helvetica,sans-serif}
+.pv-h{text-align:center;border-bottom:3px solid #1e4d3b;padding-bottom:12px;margin-bottom:16px}
+.pv-co{color:#1e4d3b;font-weight:800;font-size:21px;letter-spacing:.01em}
+.pv-t{color:#555;font-size:12px;margin-top:3px}.pv-ad{color:#666;font-size:10.5px;margin-top:2px}
+.pv-meta{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:8px;margin-bottom:14px}
+.pv-meta span,.pv-pay span,.pv-pm span{display:block;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:#555}
+.pv-meta b{font-size:13px}.pv-pay{margin-bottom:12px}.pv-pay b{font-size:16px}
+.pv-tb{width:100%;border-collapse:collapse;margin-bottom:10px}
+.pv-tb th{font-size:9.5px;color:#9a9a9a;letter-spacing:.05em;text-align:left;padding:6px 6px;font-weight:700}
+.pv-tb td{padding:8px 6px;border-bottom:1px solid #e3e3e3;vertical-align:top;font-size:12px}
+.pv-tb td small{display:block;color:#666;font-size:10.5px}
+.pv-tb .c{text-align:center}.pv-tb .r{text-align:right;white-space:nowrap}
+.pv-words{font-style:italic;color:#555;margin:6px 0 12px;font-size:11.5px}
+.pv-tot{margin-left:auto;width:62%;margin-bottom:14px}
+.pv-tot div{display:flex;justify-content:space-between;padding:4px 0}
+.pv-tot .g{color:#9a9a9a;font-weight:700;border-top:1px solid #eee;margin-top:3px;padding-top:7px}
+.pv-pm b{display:block;font-size:13px;margin-bottom:8px}
+.pv-sig{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:46px}
+.pv-sig div{border-top:1.5px solid #333;text-align:center;padding-top:5px;color:#555;font-size:11px}
+#pvPrint{display:none}
+@media print{
+  body.pvp>*:not(#pvPrint){display:none!important}
+  body.pvp #pvPrint{display:block!important}
+  body.pvp .pvdoc{padding:0;font-size:13px}
+  body.pvp .pv-co{font-size:28px}
+  body.pvp .pv-sig{margin-top:110px}
+}
+
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand"><span class="mark">AVA</span><span>Cash Book</span></div>
+  <button class="pill off" id="pill" onclick="pillTap()" aria-live="polite"><i class="dot"></i><span id="pillT">Not connected</span></button>
+</header>
+
+<main>
+<!-- ============ HOME ============ -->
+<section class="v on" id="v-home">
+  <div class="pass">
+    <div class="pl">Cash &amp; bank total</div>
+    <div class="big" id="hTot"></div>
+    <div class="accs">
+      <button class="acc" onclick="goBook('Bank')"><span>Bank Account</span><b id="hBank"></b><small class="accx" id="hBankX"></small></button>
+      <button class="acc" onclick="goBook('Petty')"><span>Petty Cash</span><b id="hPetty"></b></button>
+    </div>
+  </div>
+  <div class="qa q4">
+    <button class="in" onclick="openTx('in')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Money in</button>
+    <button class="out" onclick="openTx('out')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14"/></svg>Money out</button>
+    <button class="xf" onclick="openTx('xfer')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h14l-3-3M20 16H6l3 3"/></svg>Transfer</button>
+    <button class="pvb" onclick="pvForm()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4M10 12h5M10 16h5"/></svg>Voucher</button>
+  </div>
+  <div id="hChq"></div>
+  <div id="hOwner"></div>
+  <div id="fleetAlerts"></div>
+  <div id="connectNudge"></div>
+  <div class="card">
+    <div class="h"><span id="hMonthT">This month</span><button class="lnk" onclick="show('rep')">Full report</button></div>
+    <div class="grid3">
+      <div><span>Money in</span><b class="cin" id="hIn"></b></div>
+      <div><span>Money out</span><b class="cout" id="hOut"></b></div>
+      <div><span>Net</span><b id="hNet"></b></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="h"><span>Latest entries</span><button class="lnk" onclick="goBook('All')">See all</button></div>
+    <div class="list" id="hRecent"></div>
+  </div>
+  <div class="card">
+    <div class="h"><span>Where the money went this month</span></div>
+    <div id="hCats"></div>
+  </div>
+</section>
+
+<!-- ============ CASH BOOK ============ -->
+<section class="v" id="v-book">
+  <div style="height:12px"></div>
+  <div class="chips" id="bAcc"></div>
+  <input id="bQ" type="search" placeholder="Search description, party, category, vehicle, ref" oninput="renderBookSoon()">
+  <details class="more" id="bFilt"><summary>Filters <span id="bFiltN"></span></summary>
+    <div class="row"><div><label for="bFrom">From</label><input type="date" id="bFrom" onchange="renderBook()"></div><div><label for="bTo">To</label><input type="date" id="bTo" onchange="renderBook()"></div></div>
+    <div class="row"><div><label for="bType">Type</label><select id="bType" onchange="renderBook()"><option value="">All types</option><option value="in">Money in</option><option value="out">Money out</option><option value="xf">Transfers</option></select></div>
+      <div><label for="bCat">Category</label><select id="bCat" onchange="renderBook()"></select></div></div>
+    <div class="row"><div><label for="bVeh">Vehicle</label><select id="bVeh" onchange="renderBook()"></select></div>
+      <div><label>&nbsp;</label><button class="btn g w" onclick="clearFilt()">Clear filters</button></div></div>
+  </details>
+  <div class="sumbar">
+    <div><span>Money in</span><b class="cin" id="bIn"></b></div>
+    <div><span>Money out</span><b class="cout" id="bOut"></b></div>
+    <div><span id="bBalL">Balance now</span><b id="bBal"></b></div>
+  </div>
+  <div id="bRecon"></div>
+  <div class="bookwrap"><div class="list" id="bList"></div></div>
+  <div id="bMore"></div>
+</section>
+
+<!-- ============ REPORTS ============ -->
+<section class="v" id="v-rep">
+  <div style="height:12px"></div>
+  <div class="noprint">
+    <div class="chips" id="rChips"></div>
+    <div class="row" id="rCustom" style="display:none"><div><label for="rFrom">From</label><input type="date" id="rFrom" onchange="renderRep()"></div><div><label for="rTo">To</label><input type="date" id="rTo" onchange="renderRep()"></div></div>
+  </div>
+  <div class="print-only"><h2 style="margin-bottom:4px">AVA — Cash Book Report</h2></div>
+  <div class="card"><div class="h"><span id="rTitle"></span></div>
+    <div class="grid3">
+      <div><span>Income</span><b class="cin" id="rInc"></b></div>
+      <div><span>Expenses</span><b class="cout" id="rExp"></b></div>
+      <div><span>Net profit</span><b id="rNet"></b></div>
+    </div>
+  </div>
+  <div class="card"><div class="h">Account balances</div><div id="rAcc"></div></div>
+  <div class="card"><div class="h">Expenses by category</div><div id="rCatO"></div></div>
+  <div class="card"><div class="h">Income by category</div><div id="rCatI"></div></div>
+  <div class="card"><div class="h">Profit per vehicle</div><div id="rVeh"></div></div>
+  <div class="card"><div class="h">VAT (5%)</div><div id="rVat"></div></div>
+  <div class="row noprint" style="margin-bottom:14px">
+    <button class="btn" onclick="window.print()">Print / save PDF</button>
+    <button class="btn g" onclick="exportCsv(true)">Download CSV</button>
+  </div>
+</section>
+
+<!-- ============ CHEQUES ============ -->
+<section class="v" id="v-chq">
+  <div style="height:12px"></div>
+  <div class="card">
+    <div class="h"><span>Cheques to clear</span><b class="cout" id="cqPend"></b></div>
+    <div class="sub" id="cqPendN" style="margin:-6px 0 10px"></div>
+    <div class="grid2"><div><span>Your books (after all cheques)</span><b id="cqBook"></b></div><div><span>Bank statement should show</span><b id="cqStmt"></b></div></div>
+    <div class="row" style="margin-top:12px"><button class="btn" onclick="stmtForm()">Import bank statement</button><button class="btn g" onclick="pvForm()">New voucher</button></div>
+  </div>
+  <div class="chips" id="cqChips"></div>
+  <div class="bookwrap"><div class="list" id="cqList"></div></div>
+  <div style="height:12px"></div>
+</section>
+
+<!-- ============ SETTINGS ============ -->
+<section class="v" id="v-set">
+  <div style="height:12px"></div>
+  <div class="card" id="gCard"></div>
+
+  <div class="card"><div class="h">Payment voucher header</div>
+    <label for="coName">Company name</label><input id="coName">
+    <label for="coAddr">Address line</label><input id="coAddr">
+    <button class="btn w" onclick="saveCo()">Save header</button>
+  </div>
+
+  <div class="card"><div class="h">Opening balances</div>
+    <div class="row"><div><label for="obBank">Bank Account (AED)</label><input id="obBank" inputmode="decimal" placeholder="0.00"></div>
+      <div><label for="obPetty">Petty Cash (AED)</label><input id="obPetty" inputmode="decimal" placeholder="0.00"></div></div>
+    <button class="btn w" onclick="saveOb()">Save opening balances</button>
+  </div>
+
+  <div class="card"><div class="h">Categories</div>
+    <div class="row" style="margin-bottom:4px"><input id="newCat" placeholder="New category name" style="margin:0"><button class="btn" style="flex:0 0 auto" onclick="addCat()">Add</button></div>
+    <div class="listset" id="catList"></div>
+  </div>
+
+  <div class="card"><div class="h"><span>Fleet (vehicles)</span><span class="sub" id="vehCount"></span></div>
+    <div class="row" style="margin-bottom:8px"><button class="btn" onclick="vehForm(-1)">Add vehicle</button><button class="btn g" onclick="fleetPaste()">Paste fleet list</button></div>
+    <div class="listset" id="vehList"></div>
+  </div>
+
+  <div class="card"><div class="h">Security</div>
+    <div class="kv"><span>App PIN</span><b id="pinState"></b></div>
+    <div class="row" style="margin:10px 0 12px"><button class="btn g" onclick="setPin()">Set or change PIN</button><button class="btn g" onclick="removePin()">Remove PIN</button></div>
+    <label for="lockDate">Close the books on or before</label>
+    <input type="date" id="lockDate">
+    <div class="hint">Entries on or before this date cannot be added, edited or deleted. Use it after you finish a month.</div>
+    <button class="btn g w" onclick="saveLock()">Save closing date</button>
+  </div>
+
+  <div class="card"><div class="h">Backup &amp; export</div>
+    <div class="row" style="margin-bottom:10px"><button class="btn g" onclick="exportCsv(false)">Download CSV</button><button class="btn g" onclick="backup()">Download backup</button></div>
+    <button class="btn g w" style="margin-bottom:10px" onclick="stmtForm()">Import bank statement (paste)</button>
+    <label for="restoreF">Restore or import a backup (also works with the old AVA Cash Book file)</label>
+    <input type="file" id="restoreF" accept=".json,application/json" onchange="restore(this)">
+    <div class="row"><button class="btn g" onclick="toggleTheme()">Light / dark</button><button class="btn g" onclick="checkUpdate()">Check for update</button></div>
+    <div class="note" id="storeNote"></div>
+  </div>
+  <div class="sub" style="text-align:center;margin:6px 0 18px">AVA Cash Book <span id="ver"></span></div>
+</section>
+</main>
+
+<button class="fab" id="fab" onclick="openTx('out')" aria-label="New entry"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+
+<nav class="tabs">
+  <button class="on" data-v="home" onclick="show('home')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 11l8-6 8 6v8a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z"/></svg>Home</button>
+  <button data-v="book" onclick="show('book')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 4h11a1 1 0 0 1 1 1v15H7a2 2 0 0 1-2-2V5a1 1 0 0 1 1-1zM9 8h6M9 12h6M5 18a2 2 0 0 1 2-2h11"/></svg>Cash Book</button>
+  <button data-v="chq" onclick="show('chq')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="2"/><path d="M6 14h6M15.5 10.5h2"/></svg>Cheques</button>
+  <button data-v="rep" onclick="show('rep')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 20V10M12 20V4M19 20v-7"/></svg>Reports</button>
+  <button data-v="set" onclick="show('set')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg>Settings</button>
+</nav>
+
+<!-- ============ ENTRY FORM ============ -->
+<div class="ov" id="ov" onclick="if(event.target===this)closeTx()"><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="fT">
+  <div class="grab"></div>
+  <div class="h"><span id="fT">New entry</span><button class="chip" onclick="closeTx()">Close</button></div>
+  <div class="seg" id="fSeg">
+    <button data-t="in" class="in" onclick="setTyp('in')">Money in</button>
+    <button data-t="out" class="out" onclick="setTyp('out')">Money out</button>
+    <button data-t="xfer" class="xf" onclick="setTyp('xfer')">Transfer</button>
+  </div>
+  <label for="fAmt">Amount (AED)</label>
+  <input id="fAmt" class="amtin" inputmode="decimal" placeholder="0.00" autocomplete="off" oninput="vatInfo()">
+  <div class="row">
+    <div><label for="fAcc" id="lAcc">Account</label><select id="fAcc" onchange="xferHint()"><option value="Bank">Bank Account</option><option value="Petty">Petty Cash</option></select></div>
+    <div><label for="fDate">Date</label><input type="date" id="fDate"></div>
+  </div>
+  <div class="hint" id="xHint" style="display:none"></div>
+  <div id="vatWrap">
+    <label for="fVat">VAT</label>
+    <select id="fVat" onchange="vatInfo()"><option value="none">No VAT</option><option value="inc">5% VAT included in the amount</option><option value="add">Add 5% VAT on top of the amount</option></select>
+    <div class="hint" id="vatI"></div>
+  </div>
+  <label for="fDesc">Description</label>
+  <input id="fDesc" list="dlDesc" placeholder="e.g. Diesel for J/14377, customer payment" autocomplete="off" onchange="smartFill()">
+  <datalist id="dlDesc"></datalist>
+  <div id="catWrap">
+    <div class="row"><div><label for="fCat">Category</label><select id="fCat" onchange="fillSub()"></select></div>
+      <div><label for="fSub">Sub-category</label><select id="fSub"></select></div></div>
+    <div class="row"><div><label for="fVeh">Vehicle</label><select id="fVeh"></select></div>
+      <div><label for="fParty" id="lParty">Paid to</label><input id="fParty" list="dlParty" placeholder="Optional" autocomplete="off"><datalist id="dlParty"></datalist></div></div>
+    <label>Receipt or invoice</label>
+    <div class="filebox"><span id="rcName">No file attached</span>
+      <button class="btn g" type="button" onclick="pickFile(true)">Camera</button>
+      <button class="btn g" type="button" onclick="pickFile(false)">File</button>
+      <button class="chip" type="button" id="rcRm" style="display:none" onclick="rmFile()">Remove</button>
+    </div>
+    <input type="file" id="fCam" accept="image/*" capture="environment" hidden onchange="gotFile(this)">
+    <input type="file" id="fFile" accept="image/*,application/pdf" hidden onchange="gotFile(this)">
+  </div>
+  <div id="chqWrap"><label for="fChq" id="lChq">Cheque no. (if paid by cheque)</label><input id="fChq" inputmode="numeric" placeholder="e.g. 001858" autocomplete="off"></div>
+  <details class="more" id="fMore"><summary>Reference number</summary>
+    <label for="fRef">Reference no.</label><input id="fRef" placeholder="Made automatically if left empty" autocomplete="off">
+  </details>
+  <div class="note warn" id="fWarn" style="display:none"></div>
+  <div class="row"><button class="btn w" id="fSave" onclick="saveTx()">Save entry</button><button class="btn r" id="fDel" onclick="delTx()" style="display:none;flex:0 0 auto">Delete</button></div>
+</div></div>
+
+<!-- ============ GENERIC SHEET ============ -->
+<div class="ov" id="ov2" onclick="if(event.target===this)close2()"><div class="sheet" id="sh2" role="dialog" aria-modal="true"></div></div>
+
+<!-- ============ PIN LOCK ============ -->
+<div class="lock" id="lock">
+  <div class="mark">AVA</div>
+  <div id="lockT">Enter your PIN</div>
+  <div class="pins" id="pins"><i></i><i></i><i></i><i></i></div>
+  <div class="msg" id="lockMsg"></div>
+  <div class="pad" id="pad"></div>
+</div>
+
+<div class="toast" id="toast" role="status"></div>
+
+<div id="pvPrint"></div>
+
+<script>
+'use strict';
+/* =====================================================================
+   AVA Cash Book — offline-first cash book with Google Sheets + Drive sync
+   All money is stored as whole fils (1 AED = 100 fils) so totals are exact.
+   ===================================================================== */
+const VERSION = '3.2.0';
+const DB_NAME = 'ava-cashbook', DB_VER = 1;
+const AN = { Bank: 'Bank Account', Petty: 'Petty Cash' };
+const DEFAULT_CATS = {
+  "Diesel": [
+    "ADNOC Wallet",
+    "Diesel - UAQ (Three Star)",
+    "Diesel - Sharjah (Three Star)",
+    "Diesel - Ajman (Al Bahar)"
+  ],
+  "Income": [
+    "ALICO Project Income",
+    "Data UAQ Income",
+    "Headline Income",
+    "Ajman Furniture Income",
+    "Exalogic Income"
+  ],
+  "Rent": [
+    "14-Seater Sharjah - Yousuf Khan",
+    "14-Seater Sharjah - Sabir Khan",
+    "30-Seater Abu Dhabi - Speed Badshah",
+    "60-Seater Abu Dhabi - Habibullah",
+    "60-Seater Abu Dhabi - Azad",
+    "Bab Al Skoon Hilux",
+    "Bab Al Skoon Transport",
+    "Nad Cars Services Workshop",
+    "Basheer Rent",
+    "Emirates Rent",
+    "Fawad Ali Rasool Khan",
+    "Jabal Rayan Passengers Transport",
+    "Muhammad Noor Akbar Fazal Haq",
+    "Nasir Ullah",
+    "Waheed Ur Rehman Akram Khan",
+    "Noor Akbar Fazal Haq",
+    "UAQ Rent / DATS",
+    "General Fleet Rent"
+  ],
+  "Salaries": [
+    "Ebrahim Salary",
+    "Ebrahim Deposit",
+    "Mubarak Theyyampattil",
+    "Shahzeb / Shahzeed (Shah Zeb Rahman Sher)",
+    "Haseeb (Haseeb Tariq Tariq Mehmood)",
+    "Usman Khan (Usman Khan Gul Zada)",
+    "Ahsan Nadeem (Ahsan Nadeem Nadeem Ishaq)",
+    "Fazal Hussain (Fazal Hussain Ali Muhammad)",
+    "Huzaifa Nisahuddin",
+    "Salary - Ilyas Bacha Raham Said",
+    "Salary - Muhammad Toseef Muhammad Latif",
+    "Salary - Mohamed Islam",
+    "Salary - Shahzeeb",
+    "Ilyas",
+    "Kamarvan Kahan",
+    "Shakir",
+    "Mohammed",
+    "Abdu Salam",
+    "Abdul Gafoor",
+    "Mohammed Gulrehmen",
+    "Jehangir Khan (Jehangir Khan Bakht Sherwan)",
+    "Basheer",
+    "Naseeb",
+    "Ali"
+  ],
+  "Permits": [
+    "RAK Permit",
+    "Sharjah Permit",
+    "Dubai Permit",
+    "Parking Permit / Fees"
+  ],
+  "Maintenance": [
+    "New Tires",
+    "Used Tires",
+    "Batteries",
+    "Spare Parts",
+    "Al Nad"
+  ],
+  "Expenses": [
+    "Camry Expense",
+    "Hammer Expense",
+    "General Fleet Maintenance"
+  ],
+  "AVA": [
+    "AVA Office Rent",
+    "AVA Trade License",
+    "AVA Visas",
+    "AVA Telephone",
+    "AVA Bus",
+    "AVA Typing",
+    "AVA VAT",
+    "AVA Fines",
+    "AVA Salik"
+  ],
+  "Vehicle hire (subcontract)": [
+    "Bus hire",
+    "Pick-up hire",
+    "Salik recharge"
+  ],
+  "Cheque payments": [
+    "To be assigned"
+  ],
+  "Returned cheque": [],
+  "Bank charges": [],
+  "Owner drawings": [],
+  "Capital introduced": [],
+  "Other": []
+};
+
+const AVA_FLEET = [
+  ['27804 (Sharjah)', 'EMIRARTATS TRANSPORT', 'TOYOTA HI ACE', '2024 (Toyota Hi Ace)', 13, '2027-09-17', '2027-10-17'],
+  ['U / 77468', 'CLICK LINE PASSENGERS TRANSPORT', 'ASHOK LEYLAND FALCON', '2006 (Ashok Leyland)', 67, '2026-07-13', '2026-08-13'],
+  ['V / 16788', 'CLICK LINE PASSENGERS TRANSPORT', 'ASHOK LEYLAND', '2012 (Ashok Leyland)', 67, '2027-03-05', '2027-04-05'],
+  ['EE / 77604', 'CLICK LINE PASSENGERS TRANSPORT', 'DAEWOO 106 BS', '2010 (Daewoo 106 BS)', 57, '2026-10-19', '2026-11-19'],
+  ['O / 56229', 'SHELL PASSENGER TRANSPORT', 'ASHOK LEYLAND', '2013 (Ashok Leyland)', 64, '2026-10-16', '2026-11-16'],
+  ['M / 30419', 'CLICK LINE PASSENGERS TRANSPORT', 'DAEWOO 106 BS', '2010 (Daewoo 106 BS)', 56, '2027-01-15', '2027-02-15'],
+  ['C / 79067', 'SHELL PASSENGER TRANSPORT', 'ASHOK LEYLAND', '2011 (Ashok Leyland)', 64, '2027-04-13', '2027-05-13'],
+  ['M / 93137', 'SHELL PASSENGER TRANSPORT', 'ASHOK LEYLAND', '2012 (Ashok Leyland)', 67, '2027-01-14', '2027-02-14'],
+  ['E / 34993 (Dubai)', 'A V A PASSENGERS TRANSPORT', 'ASHOK LEYLAND FAL', '2007 (Ashok Leyland)', 84, '2025-05-15', '2025-06-15'],
+  ['AA / 79364 (Dubai)', 'A V A PASSENGERS TRANSPORT', 'ASHOK LEYLAND FAL', '2004 (Ashok Leyland)', 84, '2026-07-25', '2026-08-25']
+];
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+/* ---------------- money (integer fils) ---------------- */
+function parseAmt(str) {
+  const s = String(str == null ? '' : str).replace(/[,\s]/g, '').replace(/^AED/i, '');
+  if (!/^\d+(\.\d{0,2})?$|^\.\d{1,2}$/.test(s)) return NaN;
+  const [w, f = ''] = s.split('.');
+  return Number(w || 0) * 100 + Number((f + '00').slice(0, 2));
+}
+function fmt(fils, opt) {
+  const neg = fils < 0, a = Math.abs(Math.round(fils));
+  const s = Math.floor(a / 100).toLocaleString('en-US') + '.' + String(a % 100).padStart(2, '0');
+  return (neg ? '−' : '') + (opt === 'aed' ? 'AED ' : '') + s;
+}
+const fx = f => (f / 100).toFixed(2); // plain decimal for CSV / inputs
+const vatIncl = amt => Math.round(amt * 5 / 105);
+
+/* ---------------- dates ---------------- */
+const pad2 = n => String(n).padStart(2, '0');
+const ymd = d => d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
+const today = () => ymd(new Date());
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+function niceDate(s) {
+  const d = new Date(s + 'T00:00:00'), t = today(), y = ymd(new Date(Date.now() - 864e5));
+  if (s === t) return 'Today';
+  if (s === y) return 'Yesterday';
+  return DAYS[d.getDay()] + ' ' + d.getDate() + ' ' + MONTHS[d.getMonth()] + (s.slice(0, 4) !== t.slice(0, 4) ? ' ' + s.slice(0, 4) : '');
+}
+const monthName = m => { const [y, mm] = m.split('-'); return ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][+mm - 1] + ' ' + y; };
+function uid() {
+  const a = new Uint8Array(10); crypto.getRandomValues(a);
+  return Date.now().toString(36) + '-' + Array.from(a, b => b.toString(16).padStart(2, '0')).join('');
+}
+
+/* ---------------- IndexedDB ---------------- */
+let db;
+function openDB() {
+  return new Promise((res, rej) => {
+    const r = indexedDB.open(DB_NAME, DB_VER);
+    r.onupgradeneeded = () => {
+      const d = r.result;
+      if (!d.objectStoreNames.contains('tx')) d.createObjectStore('tx', { keyPath: 'uid' });
+      if (!d.objectStoreNames.contains('meta')) d.createObjectStore('meta');
+      if (!d.objectStoreNames.contains('files')) d.createObjectStore('files');
+    };
+    r.onsuccess = () => res(r.result);
+    r.onerror = () => rej(r.error);
+  });
+}
+function idb(store, mode, fn) {
+  return new Promise((res, rej) => {
+    const t = db.transaction(store, mode), s = t.objectStore(store);
+    let out; const r = fn(s);
+    if (r) r.onsuccess = () => { out = r.result; };
+    t.oncomplete = () => res(out);
+    t.onerror = () => rej(t.error); t.onabort = () => rej(t.error || new Error('aborted'));
+  });
+}
+const dbGetAll = s => idb(s, 'readonly', st => st.getAll());
+const dbGet = (s, k) => idb(s, 'readonly', st => st.get(k));
+const dbPut = (s, v, k) => idb(s, 'readwrite', st => k === undefined ? st.put(v) : st.put(v, k));
+const dbDel = (s, k) => idb(s, 'readwrite', st => st.delete(k));
+function dbPutMany(list) {
+  return new Promise((res, rej) => {
+    const t = db.transaction('tx', 'readwrite'), s = t.objectStore('tx');
+    list.forEach(x => s.put(x));
+    t.oncomplete = () => res(); t.onerror = () => rej(t.error);
+  });
+}
+
+/* ---------------- state ---------------- */
+let TX = [];          // all records incl. soft-deleted
+let SET = null;       // settings (synced)
+let CFG = {};         // local-only config: url, key, device, code, seq, rev, theme, pin
+let view = 'home', bookAcc = 'All', repPeriod = 'this', typ = 'out', editUid = null, pendingFile = null, rmRc = false, bookLimit = 120;
+
+async function loadAll() {
+  TX = (await dbGetAll('tx')) || [];
+  SET = await dbGet('meta', 'settings');
+  CFG = (await dbGet('meta', 'cfg')) || {};
+  if (!SET) {
+    SET = { cats: JSON.parse(JSON.stringify(DEFAULT_CATS)), veh: [], ob: { Bank: 0, Petty: 0 }, lockDate: '', updatedAt: 0 };
+    await dbPut('meta', SET, 'settings');
+  }
+  if (!SET.vinfo) SET.vinfo = {};
+  if (v3Migrate()) await dbPut('meta', SET, 'settings');
+  if (!SET.fleetSeeded) {
+    AVA_FLEET.forEach(r => mergeVeh({ plate: r[0], owner: r[1], vtype: r[2], model: r[3], seats: r[4], reg: r[5], ins: r[6] }));
+    SET.fleetSeeded = 1; if (SET.updatedAt) SET.updatedAt = Date.now(); await dbPut('meta', SET, 'settings');
+  }
+  if (!CFG.device) {
+    CFG.code = Math.random().toString(36).slice(2, 4).toUpperCase().replace(/[^A-Z0-9]/g, 'X');
+    CFG.device = guessDevice() + ' ' + CFG.code;
+    CFG.seq = 0;
+    await saveCfg();
+  }
+  // migrate from the first AVA Cash Book (localStorage) if present
+  try {
+    const old = localStorage.getItem('ava_cashbook_v1');
+    if (old && !CFG.migrated) {
+      const n = await importLegacy(JSON.parse(old));
+      CFG.migrated = true; await saveCfg();
+      if (n) setTimeout(() => toast('Moved ' + n + ' entries from the old cash book'), 600);
+    }
+  } catch (e) { }
+}
+function guessDevice() {
+  const u = navigator.userAgent;
+  if (/iPhone/.test(u)) return 'iPhone'; if (/iPad/.test(u)) return 'iPad';
+  if (/Android/.test(u)) return 'Android'; if (/Mac/.test(u)) return 'Mac'; if (/Windows/.test(u)) return 'Windows PC';
+  return 'Device';
+}
+const saveCfg = () => dbPut('meta', CFG, 'cfg');
+async function saveSet() { SET.updatedAt = Date.now(); await dbPut('meta', SET, 'settings'); syncSoon(); }
+
+const live = () => TX.filter(t => !t.deleted);
+const order = (a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : (a.createdAt || 0) - (b.createdAt || 0) || (a.uid < b.uid ? -1 : 1);
+const sgn = t => t.type === 'in' ? t.amt : -t.amt;
+const bal = (acc, upTo) => (SET.ob[acc] || 0) + live().filter(t => t.acc === acc && (!upTo || t.date <= upTo)).reduce((s, t) => s + sgn(t), 0);
+const isLocked = d => SET.lockDate && d <= SET.lockDate;
+
+/* ---------------- toast & helpers ---------------- */
+let toastT;
+function toast(m, ms) { const t = $('toast'); t.textContent = m; t.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('on'), ms || 2600); }
+function opts(arr, sel, ph) { return (ph != null ? '<option value="">' + esc(ph) + '</option>' : '') + arr.map(v => '<option value="' + esc(v) + '"' + (v === sel ? ' selected' : '') + '>' + esc(v) + '</option>').join(''); }
+function nextRef(kind) {
+  CFG.seq = (CFG.seq || 0) + 1; saveCfg();
+  return kind + '-' + (CFG.code || 'XX') + String(CFG.seq).padStart(4, '0');
+}
+
+/* =====================================================================
+   RENDER
+   ===================================================================== */
+function show(v) {
+  view = v;
+  document.querySelectorAll('.v').forEach(e => e.classList.toggle('on', e.id === 'v-' + v));
+  document.querySelectorAll('nav.tabs button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
+  $('fab').style.display = v === 'set' || v === 'rep' || v === 'chq' ? 'none' : 'grid';
+  window.scrollTo(0, 0);
+  render();
+}
+function goBook(a) { bookAcc = a; bookLimit = 120; show('book'); }
+
+function render() {
+  if (view === 'home') renderHome();
+  if (view === 'book') renderBook();
+  if (view === 'rep') renderRep();
+  if (view === 'set') renderSet();
+  if (view === 'chq') renderChq();
+  renderPill();
+}
+
+function itemHTML(t, showBal) {
+  const xf = !!t.tr, cls = xf ? 'xf' : t.type;
+  const title = t.desc || t.cat || (xf ? 'Transfer' : t.type === 'in' ? 'Money in' : 'Money out');
+  const bits = [];
+  if (xf) bits.push(t.type === 'out' ? 'From ' + AN[t.acc] : 'To ' + AN[t.acc]); else bits.push(AN[t.acc]);
+  if (t.cat && !xf) bits.push(t.cat + (t.sub ? ' › ' + t.sub : ''));
+  if (t.veh) bits.push(t.veh);
+  if (t.party) bits.push(t.party);
+  if (t.chq) bits.push('Chq ' + t.chq + (t.type === 'out' && !t.clr && t.acc === 'Bank' ? ' · to clear' : ''));
+  if (t.pv) bits.push(t.pv);
+  if (t.vat) bits.push('VAT ' + fmt(t.vat));
+  if (t.rcpt) bits.push('📎');
+  return '<button class="it" onclick="' + (t.pv ? 'pvView(' : 'openTx(null,') + '\'' + t.uid + '\')"><span class="ic ' + cls + '">' + (xf ? '⇄' : t.type === 'in' ? '+' : '−') + '</span>' +
+    '<span class="mid"><b>' + esc(title) + (t.dirty ? '<i class="flag" title="Waiting to sync"></i>' : '') + '</b><small>' + esc(t.ref) + ' · ' + esc(bits.join(' · ')) + '</small></span>' +
+    '<span class="amt ' + cls + '">' + (t.type === 'in' ? '+' : '−') + fmt(t.amt) + (showBal != null ? '<small>Bal ' + fmt(showBal) + '</small>' : '') + '</span></button>';
+}
+
+function renderHome() {
+  renderFleetAlerts();
+  renderOwner();
+  const b = bal('Bank'), p = bal('Petty');
+  const pc = pendingChq(), pa = pc.reduce((s, t) => s + t.amt, 0);
+  $('hBankX').textContent = pc.length ? 'Bank shows ' + fmt(b + pa) : '';
+  $('hChq').innerHTML = pc.length ? '<button class="card" style="width:100%;text-align:left;display:block;font:inherit;color:inherit" onclick="chqFilter=\'pending\';show(\'chq\')"><div class="h"><span>' + pc.length + ' cheque' + (pc.length > 1 ? 's' : '') + ' to clear</span><b class="cout">' + fmt(pa, 'aed') + '</b></div><div class="sub">The bank still shows ' + fmt(b + pa, 'aed') + '. After these cheques are paid, ' + fmt(b, 'aed') + ' is left. Your Bank balance above already allows for them.</div></button>' : '';
+  $('hTot').innerHTML = '<small>AED</small>' + fmt(b + p);
+  $('hBank').textContent = fmt(b); $('hBank').classList.toggle('neg', b < 0);
+  $('hPetty').textContent = fmt(p); $('hPetty').classList.toggle('neg', p < 0);
+  const m = today().slice(0, 7), mt = live().filter(t => t.date.startsWith(m) && !t.tr);
+  const i = mt.filter(t => t.type === 'in').reduce((s, t) => s + t.amt, 0), o = mt.filter(t => t.type === 'out').reduce((s, t) => s + t.amt, 0);
+  $('hMonthT').textContent = monthName(m);
+  $('hIn').textContent = fmt(i); $('hOut').textContent = fmt(o);
+  $('hNet').textContent = fmt(i - o); $('hNet').className = i - o < 0 ? 'cout' : 'cin';
+  const rc = live().sort(order).reverse().slice(0, 6);
+  $('hRecent').innerHTML = rc.length ? rc.map(t => itemHTML(t)).join('') : '<div class="empty">No entries yet.<br>Tap <b>Money in</b> or <b>Money out</b> to add the first one.</div>';
+  $('hCats').innerHTML = barsHTML(groupBy(mt.filter(t => t.type === 'out'), t => t.cat || 'Uncategorised'), '', 'No spending recorded this month.');
+  $('connectNudge').innerHTML = CFG.url ? '' : '<div class="card" style="border-color:var(--brass)"><div class="h">Connect Google Sheets &amp; Drive</div><div class="sub" style="margin-bottom:10px">Your entries are saved on this phone. Connect once so every entry and receipt is also stored in your Google Sheet and Drive.</div><button class="btn br w" onclick="show(\'set\')">Set up connection</button></div>';
+}
+function renderOwner() {
+  const el = $('hOwner'); if (!el) return;
+  const sum = (a, b) => { const L = live().filter(x => !x.tr && x.date >= a && x.date <= b); return { i: L.filter(x => x.type === 'in').reduce((s, x) => s + x.amt, 0), o: L.filter(x => x.type === 'out').reduce((s, x) => s + x.amt, 0) }; };
+  const [f, t] = periodRange('this'), [pf, pt] = periodRange('last'), y = today().slice(0, 4);
+  const c = sum(f, t), p = sum(pf, pt), yr = sum(y + '-01-01', y + '-12-31');
+  const row = (l, a, b) => '<div class="kv"><span>' + l + '</span><b>' + fmt(a) + ' <span class="sub">vs ' + fmt(b) + '</span></b></div>';
+  const net = c.i - c.o, pnet = p.i - p.o;
+  const yl = live().filter(x => !x.tr && x.date.startsWith(y));
+  const noCat = yl.filter(x => !x.cat).length;
+  const noVeh = yl.filter(x => x.type === 'out' && ['Diesel', 'Maintenance'].includes(x.cat) && !x.veh).length;
+  const noRc = yl.filter(x => x.type === 'out' && x.vat && !x.rcpt).length;
+  const fi = fleetIssues(), exp = fi.filter(i => i.n < 0).length, soon = fi.length - exp;
+  const pc = pendingChq().length, wait = TX.filter(x => x.dirty).length;
+  const it = [];
+  if (exp) it.push(['Vehicle documents expired', exp, 1]);
+  if (soon) it.push(['Vehicle documents expiring within 30 days', soon, 0]);
+  if (pc) it.push(['Cheques waiting to clear', pc, 0]);
+  if (noCat) it.push(['Entries with no category (this year)', noCat, 0]);
+  if (noVeh) it.push(['Diesel / maintenance with no vehicle', noVeh, 0]);
+  if (noRc) it.push(['VAT expenses with no receipt', noRc, 0]);
+  if (wait) it.push(['Entries not yet sent to Google Sheets', wait, 0]);
+  el.innerHTML = '<div class="card"><div class="h"><span>Business check</span><button class="lnk" onclick="show(\'rep\')">Reports</button></div>' +
+    row('Income this month', c.i, p.i) + row('Expenses this month', c.o, p.o) +
+    '<div class="kv tot"><span>Profit this month</span><b class="' + (net < 0 ? 'cout' : 'cin') + '">' + fmt(net, 'aed') + ' <span class="sub">vs ' + fmt(pnet) + ' last month</span></b></div>' +
+    '<div class="kv"><span>Profit so far in ' + y + '</span><b class="' + (yr.i - yr.o < 0 ? 'cout' : 'cin') + '">' + fmt(yr.i - yr.o, 'aed') + '</b></div>' +
+    (it.length ? '<div style="margin-top:10px"><b>Needs attention</b></div>' + it.map(([l, n, bad]) => '<div class="kv"><span>' + l + '</span><b class="' + (bad ? 'cout' : '') + '">' + n + '</b></div>').join('') : '<div class="note" style="margin-top:10px">Everything is up to date.</div>') + '</div>';
+}
+function groupBy(list, key) { const g = {}; list.forEach(t => { const k = key(t); g[k] = (g[k] || 0) + t.amt; }); return Object.entries(g).sort((a, b) => b[1] - a[1]); }
+function barsHTML(ent, cls, empty) {
+  if (!ent.length) return '<div class="empty">' + empty + '</div>';
+  const mx = ent[0][1] || 1, tot = ent.reduce((s, e) => s + e[1], 0);
+  return ent.map(([k, v]) => '<div class="bar-row"><div class="t"><span>' + esc(k) + '</span><b>' + fmt(v) + ' <span class="sub">' + Math.round(v / tot * 100) + '%</span></b></div><div class="bar ' + cls + '"><i style="width:' + Math.max(3, v / mx * 100) + '%"></i></div></div>').join('') +
+    '<div class="kv tot"><span>Total</span><b>' + fmt(tot, 'aed') + '</b></div>';
+}
+
+/* ---------------- cash book ---------------- */
+let bookT;
+function renderBookSoon() { clearTimeout(bookT); bookT = setTimeout(() => { bookLimit = 120; renderBook(); }, 160); }
+function clearFilt() { ['bFrom', 'bTo', 'bType', 'bCat', 'bVeh', 'bQ'].forEach(i => $(i).value = ''); renderBook(); }
+function renderBook() {
+  $('bAcc').innerHTML = ['All', 'Bank', 'Petty'].map(a => '<button class="chip ' + (bookAcc === a ? 'on' : '') + '" onclick="bookAcc=\'' + a + '\';bookLimit=120;renderBook()">' + (a === 'All' ? 'All accounts' : AN[a]) + '</button>').join('');
+  const cats = Object.keys(SET.cats), cv = $('bCat').value, vv = $('bVeh').value;
+  $('bCat').innerHTML = opts(cats.concat(['Transfer']), cv, 'All categories');
+  $('bVeh').innerHTML = opts(SET.veh, vv, 'All vehicles');
+  const q = $('bQ').value.trim().toLowerCase(), f = $('bFrom').value, to = $('bTo').value, ty = $('bType').value, c = $('bCat').value, vh = $('bVeh').value;
+  const nf = [f, to, ty, c, vh].filter(Boolean).length;
+  $('bFiltN').textContent = nf ? '(' + nf + ' on)' : '';
+  const run = { Bank: SET.ob.Bank || 0, Petty: SET.ob.Petty || 0 };
+  const rows = live().sort(order).map(x => { run[x.acc] += sgn(x); return { x, b: run[x.acc] }; }).filter(({ x }) =>
+    (bookAcc === 'All' || x.acc === bookAcc) && (!f || x.date >= f) && (!to || x.date <= to) &&
+    (!ty || (ty === 'xf' ? !!x.tr : x.type === ty && !x.tr)) && (!c || (c === 'Transfer' ? !!x.tr : x.cat === c)) && (!vh || x.veh === vh) &&
+    (!q || [x.desc, x.cat, x.sub, x.ref, x.veh, x.party, x.chq, x.pv, fx(x.amt)].join(' ').toLowerCase().includes(q)));
+  const I = rows.reduce((s, { x }) => s + (x.type === 'in' ? x.amt : 0), 0), O = rows.reduce((s, { x }) => s + (x.type === 'out' ? x.amt : 0), 0);
+  $('bIn').textContent = fmt(I); $('bOut').textContent = fmt(O);
+  const filtered = nf || q;
+  if (bookAcc !== 'All' && !filtered) { $('bBalL').textContent = 'Balance now'; $('bBal').textContent = fmt(bal(bookAcc)); }
+  else if (bookAcc === 'All' && !filtered) { $('bBalL').textContent = 'Balance now'; $('bBal').textContent = fmt(bal('Bank') + bal('Petty')); }
+  else { $('bBalL').textContent = 'Net of results'; $('bBal').textContent = fmt(I - O); }
+  $('bRecon').innerHTML = bookAcc !== 'All' ? '<button class="btn g w" style="margin-bottom:10px" onclick="recon(\'' + bookAcc + '\')">Check against ' + (bookAcc === 'Bank' ? 'bank statement' : 'cash count') + '</button>' : '';
+  const show = rows.reverse().slice(0, bookLimit);
+  let html = '', day = '';
+  show.forEach(({ x, b }) => {
+    if (x.date !== day) { day = x.date; html += '<div class="day"><span>' + niceDate(day) + '</span><span>' + day + '</span></div>'; }
+    html += itemHTML(x, bookAcc !== 'All' ? b : null);
+  });
+  $('bList').innerHTML = html || '<div class="empty">' + (TX.length ? 'No entries match these filters.' : 'No entries yet.') + '</div>';
+  $('bMore').innerHTML = rows.length > bookLimit ? '<button class="btn g w" style="margin:10px 0" onclick="bookLimit+=200;renderBook()">Show older entries (' + (rows.length - bookLimit) + ' more)</button>' : '';
+}
+
+function recon(acc) {
+  open2('<div class="grab"></div><div class="h"><span>' + (acc === 'Bank' ? 'Check against bank statement' : 'Count the petty cash') + '</span><button class="chip" onclick="close2()">Close</button></div>' +
+    '<div class="row"><div><label for="rcD">As of date</label><input type="date" id="rcD" value="' + today() + '" onchange="reconCalc(\'' + acc + '\')"></div>' +
+    '<div><label for="rcA">' + (acc === 'Bank' ? 'Statement balance' : 'Cash counted') + ' (AED)</label><input id="rcA" inputmode="decimal" placeholder="0.00" oninput="reconCalc(\'' + acc + '\')"></div></div><div id="rcOut"></div>');
+  reconCalc(acc);
+}
+function reconCalc(acc) {
+  const d = $('rcD').value || today(), cb = bal(acc, d), a = parseAmt($('rcA').value);
+  const pend = acc === 'Bank' ? pendingChq(d) : [], pa = pend.reduce((s, t) => s + t.amt, 0), book = cb + pa;
+  let h = '<div class="kv"><span>Cash book balance on ' + dmy(d) + '</span><b>' + fmt(cb, 'aed') + '</b></div>' +
+    (pend.length ? '<div class="kv"><span>+ ' + pend.length + ' cheque(s) not yet paid by the bank</span><b>' + fmt(pa) + '</b></div><div class="kv tot"><span>Bank should show</span><b>' + fmt(book, 'aed') + '</b></div>' : '');
+  if (!isNaN(a)) {
+    const diff = a - book;
+    h += '<div class="kv"><span>' + (acc === 'Bank' ? 'Statement' : 'Counted') + '</span><b>' + fmt(a, 'aed') + '</b></div>' +
+      '<div class="kv tot"><span>Difference</span><b class="' + (diff ? 'cout' : 'cin') + '">' + fmt(diff, 'aed') + '</b></div>' +
+      '<div class="note ' + (diff ? 'warn' : '') + '">' + (diff === 0 ? 'Matches exactly. Your books are in balance.' :
+        diff > 0 ? 'You have ' + fmt(diff, 'aed') + ' more than the cash book shows. Look for money in that was not entered.' :
+          'You have ' + fmt(-diff, 'aed') + ' less than the cash book shows. Look for an expense or bank charge that was not entered.') + '</div>';
+  }
+  $('rcOut').innerHTML = h;
+}
+
+/* ---------------- reports ---------------- */
+function periodRange(p) {
+  const d = new Date(), y = d.getFullYear(), m = d.getMonth();
+  if (p === 'this') return [ymd(new Date(y, m, 1)), ymd(new Date(y, m + 1, 0)), monthName(today().slice(0, 7))];
+  if (p === 'last') { const s = new Date(y, m - 1, 1); return [ymd(s), ymd(new Date(y, m, 0)), monthName(ymd(s).slice(0, 7))]; }
+  if (p === 'qtr') { const q = Math.floor(m / 3); return [ymd(new Date(y, q * 3, 1)), ymd(new Date(y, q * 3 + 3, 0)), 'Q' + (q + 1) + ' ' + y]; }
+  if (p === 'year') return [y + '-01-01', y + '-12-31', 'Year ' + y];
+  const f = $('rFrom').value || ymd(new Date(y, m, 1)), t = $('rTo').value || today();
+  return [f, t, f + ' to ' + t];
+}
+function renderRep() {
+  const P = [['this', 'This month'], ['last', 'Last month'], ['qtr', 'This quarter'], ['year', 'This year'], ['custom', 'Custom']];
+  $('rChips').innerHTML = P.map(([k, l]) => '<button class="chip ' + (repPeriod === k ? 'on' : '') + '" onclick="repPeriod=\'' + k + '\';renderRep()">' + l + '</button>').join('');
+  $('rCustom').style.display = repPeriod === 'custom' ? 'flex' : 'none';
+  const [f, t, title] = periodRange(repPeriod);
+  $('rTitle').textContent = title + (repPeriod === 'custom' ? '' : ' · ' + f + ' to ' + t);
+  const L = live().filter(x => x.date >= f && x.date <= t), nt = L.filter(x => !x.tr);
+  const inc = nt.filter(x => x.type === 'in'), exp = nt.filter(x => x.type === 'out');
+  const I = inc.reduce((s, x) => s + x.amt, 0), O = exp.reduce((s, x) => s + x.amt, 0);
+  $('rInc').textContent = fmt(I); $('rExp').textContent = fmt(O); $('rNet').textContent = fmt(I - O); $('rNet').className = I - O < 0 ? 'cout' : 'cin';
+  const prev = ymd(new Date(new Date(f + 'T00:00:00').getTime() - 864e5));
+  $('rAcc').innerHTML = ['Bank', 'Petty'].map(a => {
+    const o = bal(a, prev), ins = L.filter(x => x.acc === a && x.type === 'in').reduce((s, x) => s + x.amt, 0), outs = L.filter(x => x.acc === a && x.type === 'out').reduce((s, x) => s + x.amt, 0);
+    return '<div style="margin-bottom:10px"><b>' + AN[a] + '</b><div class="kv"><span>Opening on ' + f + '</span><b>' + fmt(o) + '</b></div><div class="kv"><span>Money in</span><b class="cin">+' + fmt(ins) + '</b></div><div class="kv"><span>Money out</span><b class="cout">−' + fmt(outs) + '</b></div><div class="kv tot"><span>Closing on ' + t + '</span><b>' + fmt(o + ins - outs, 'aed') + '</b></div>' + (a === 'Bank' && pendingChq(t).length ? '<div class="kv"><span>Cheques not yet cleared</span><b>' + fmt(pendingChq(t).reduce((s, x) => s + x.amt, 0)) + '</b></div><div class="kv"><span>Bank statement should show</span><b>' + fmt(stmtBal(t), 'aed') + '</b></div>' : '') + '</div>';
+  }).join('');
+  $('rCatO').innerHTML = barsHTML(groupBy(exp, x => x.cat || 'Uncategorised'), '', 'No expenses in this period.');
+  $('rCatI').innerHTML = barsHTML(groupBy(inc, x => x.cat || 'Uncategorised'), 'g', 'No income in this period.');
+  const vs = {}; nt.filter(x => x.veh).forEach(x => { const v = vs[x.veh] = vs[x.veh] || { i: 0, o: 0 }; if (x.type === 'in') v.i += x.amt; else v.o += x.amt; });
+  const ve = Object.entries(vs).sort((a, b) => (b[1].i - b[1].o) - (a[1].i - a[1].o));
+  $('rVeh').innerHTML = ve.length ? ve.map(([k, v]) => '<div class="kv"><span>' + esc(k) + '<br><small class="sub">In ' + fmt(v.i) + ' · Cost ' + fmt(v.o) + '</small></span><b class="' + (v.i - v.o < 0 ? 'cout' : 'cin') + '">' + fmt(v.i - v.o) + '</b></div>').join('') + '<div class="sub" style="margin-top:6px">Choose a vehicle on money in and money out to see profit for each one.</div>' : '<div class="empty">Choose a vehicle on entries to see profit per vehicle.</div>';
+  const vi = inc.reduce((s, x) => s + (x.vat || 0), 0), vo = exp.reduce((s, x) => s + (x.vat || 0), 0);
+  const noRc = exp.filter(x => x.vat && !x.rcpt).length;
+  $('rVat').innerHTML = '<div class="kv"><span>Output VAT (on money in)</span><b>' + fmt(vi) + '</b></div><div class="kv"><span>Input VAT (on money out)</span><b>' + fmt(vo) + '</b></div>' +
+    '<div class="kv tot"><span>' + (vi - vo >= 0 ? 'VAT payable' : 'VAT refundable') + '</span><b>' + fmt(Math.abs(vi - vo), 'aed') + '</b></div>' +
+    (noRc ? '<div class="note warn">' + noRc + ' VAT expense' + (noRc > 1 ? 's have' : ' has') + ' no receipt attached. Keep tax invoices to claim input VAT.</div>' : '') +
+    '<div class="sub" style="margin-top:6px">A guide figure for your records. Check it with your accountant before filing your VAT return.</div>';
+}
+
+/* ---------------- settings ---------------- */
+function renderSet() {
+  const c = CFG.url;
+  $('gCard').innerHTML = '<div class="h">Google connection</div>' + (c ?
+    '<div class="kv"><span>Status</span><b class="' + (syncState.err ? 'cout' : 'cin') + '">' + (syncState.err ? 'Problem: ' + esc(syncState.err) : 'Connected') + '</b></div>' +
+    '<div class="kv"><span>Last sync</span><b>' + (CFG.lastSync ? new Date(CFG.lastSync).toLocaleString() : 'Not yet') + '</b></div>' +
+    '<div class="kv"><span>Waiting to sync</span><b>' + pendingCount() + '</b></div>' +
+    '<div class="kv"><span>This device</span><b>' + esc(CFG.device) + '</b></div>' +
+    '<div class="row" style="margin-top:10px"><button class="btn" onclick="syncNow(true)">Sync now</button>' + (CFG.sheetUrl ? '<a class="btn g" style="text-align:center;text-decoration:none;line-height:22px" href="' + esc(CFG.sheetUrl) + '" target="_blank" rel="noopener">Open Sheet</a>' : '') + '</div>' +
+    (CFG.folderUrl ? '<a class="lnk" style="display:block;margin-top:10px" href="' + esc(CFG.folderUrl) + '" target="_blank" rel="noopener">Open receipts folder in Google Drive</a>' : '') +
+    '<button class="lnk" style="margin-top:10px" onclick="connectForm()">Change connection</button>'
+    : '<div class="sub" style="margin-bottom:10px">Store every entry in a Google Sheet and every receipt in Google Drive. Works offline and syncs when you are back online.</div><button class="btn br w" onclick="connectForm()">Connect Google Sheets &amp; Drive</button>');
+  $('obBank').value = SET.ob.Bank ? fx(SET.ob.Bank) : ''; $('obPetty').value = SET.ob.Petty ? fx(SET.ob.Petty) : '';
+  $('lockDate').value = SET.lockDate || '';
+  $('coName').value = (SET.co || CO_DEFAULT).name; $('coAddr').value = (SET.co || CO_DEFAULT).addr;
+  const ks = Object.keys(SET.cats);
+  $('catList').innerHTML = ks.map((k, i) => '<div class="li" style="display:block"><div style="display:flex;justify-content:space-between;align-items:center"><b>' + esc(k) + '</b><button class="chip" onclick="delCat(' + i + ')">Delete</button></div>' +
+    '<div class="chips w" style="margin:8px 0">' + (SET.cats[k].map((s, j) => '<button class="chip" onclick="delSub(' + i + ',' + j + ')" aria-label="Remove ' + esc(s) + '">' + esc(s) + ' ✕</button>').join('') || '<span class="sub">No sub-categories</span>') + '</div>' +
+    '<div class="row"><input id="ns' + i + '" placeholder="Add sub-category" style="margin:0"><button class="btn g" style="flex:0 0 auto" onclick="addSub(' + i + ')">Add</button></div></div>').join('') || '<div class="empty">No categories yet.</div>';
+  renderVehList();
+  $('pinState').textContent = CFG.pin ? 'On' : 'Off';
+  $('ver').textContent = 'v' + VERSION;
+  storeNote();
+}
+async function storeNote() {
+  let t = 'Entries are saved on this device first' + (CFG.url ? ', then copied to Google Sheets and Drive.' : '. Connect Google to keep a copy in your Sheet and Drive.');
+  try { if (navigator.storage && navigator.storage.persisted && await navigator.storage.persisted()) t += ' Storage is protected from automatic clean-up.'; } catch (e) { }
+  $('storeNote').textContent = t;
+}
+async function saveOb() {
+  const b = $('obBank').value.trim() ? parseAmt($('obBank').value) : 0, p = $('obPetty').value.trim() ? parseAmt($('obPetty').value) : 0;
+  if (isNaN(b) || isNaN(p)) return toast('Enter balances as numbers, e.g. 1250.50');
+  SET.ob = { Bank: b, Petty: p }; await saveSet(); render(); toast('Opening balances saved');
+}
+async function saveLock() {
+  SET.lockDate = $('lockDate').value || ''; await saveSet(); toast(SET.lockDate ? 'Books closed up to ' + SET.lockDate : 'Closing date removed');
+}
+async function addCat() { const n = $('newCat').value.trim(); if (!n) return; if (SET.cats[n]) return toast('That category already exists'); SET.cats[n] = []; $('newCat').value = ''; await saveSet(); render(); }
+async function delCat(i) { const k = Object.keys(SET.cats)[i]; if (!confirm('Delete category "' + k + '"? Past entries keep this label.')) return; delete SET.cats[k]; await saveSet(); render(); }
+async function addSub(i) { const k = Object.keys(SET.cats)[i], n = $('ns' + i).value.trim(); if (!n) return; if (!SET.cats[k].includes(n)) SET.cats[k].push(n); await saveSet(); render(); }
+async function delSub(i, j) { SET.cats[Object.keys(SET.cats)[i]].splice(j, 1); await saveSet(); render(); }
+/* ---------------- fleet register ---------------- */
+const normPlate = p => String(p || '').trim().replace(/\s+/g, ' ').toUpperCase();
+const plateKey = p => normPlate(p).replace(/\(.*?\)/g, '').replace(/[^A-Z0-9]/g, '');
+function mergeVeh(v) {
+  const plate = normPlate(v.plate); if (!plate) return false;
+  const k = plateKey(plate), ex = SET.veh.find(x => plateKey(x) === k) || plate;
+  if (!SET.veh.includes(ex)) SET.veh.push(ex);
+  SET.vinfo[ex] = Object.assign({}, SET.vinfo[ex] || {}, clean2(v), { plate: ex });
+  return true;
+}
+function clean2(v) { const o = {}; ['owner', 'vtype', 'model', 'seats', 'reg', 'ins'].forEach(k => { if (v[k] !== undefined && v[k] !== '') o[k] = v[k]; }); return o; }
+function daysTo(d) { if (!d) return null; return Math.round((new Date(d + 'T00:00:00') - new Date(today() + 'T00:00:00')) / 864e5); }
+const dmy = d => d ? d.slice(8, 10) + '-' + d.slice(5, 7) + '-' + d.slice(0, 4) : '';
+function expBadge(label, d) {
+  const n = daysTo(d); if (n == null) return '<span class="badge soon">' + label + ': no date</span>';
+  if (n < 0) return '<span class="badge bad">' + label + ' expired ' + (-n) + ' day' + (n === -1 ? '' : 's') + ' ago</span>';
+  if (n === 0) return '<span class="badge bad">' + label + ' expires today</span>';
+  if (n <= 30) return '<span class="badge soon">' + label + ' in ' + n + ' day' + (n === 1 ? '' : 's') + ' · ' + dmy(d) + '</span>';
+  return '<span class="badge ok">' + label + ' ' + dmy(d) + '</span>';
+}
+function fleetIssues() {
+  const out = [];
+  SET.veh.forEach(p => { const v = SET.vinfo[p] || {};
+    [['Registration', v.reg], ['Insurance', v.ins]].forEach(([l, d]) => { const n = daysTo(d); if (n != null && n <= 30) out.push({ p, l, d, n }); }); });
+  return out.sort((a, b) => a.n - b.n);
+}
+function renderFleetAlerts() {
+  const is = fleetIssues(), el = $('fleetAlerts'); if (!el) return;
+  if (!is.length) { el.innerHTML = ''; return; }
+  const ex = is.filter(i => i.n < 0).length;
+  el.innerHTML = '<div class="card alert"><div class="h"><span>Fleet renewals' + (ex ? ' · ' + ex + ' expired' : '') + '</span><button class="lnk" onclick="show(\'set\');setTimeout(()=>$(\'vehList\').scrollIntoView(),50)">Fleet</button></div>' +
+    is.slice(0, 8).map(i => '<div class="kv"><span>' + esc(i.p) + ' · ' + i.l + '</span><b class="' + (i.n <= 0 ? 'cout' : '') + '">' + (i.n < 0 ? 'Expired ' + dmy(i.d) : i.n === 0 ? 'Today' : i.n + (i.n === 1 ? ' day · ' : ' days · ') + dmy(i.d)) + '</b></div>').join('') +
+    (is.length > 8 ? '<div class="sub" style="margin-top:6px">+' + (is.length - 8) + ' more in Settings › Fleet</div>' : '') + '</div>';
+}
+function vehSpend(p) { const y = today().slice(0, 4); return live().filter(t => t.veh === p && t.type === 'out' && !t.tr && t.date.startsWith(y)).reduce((s, t) => s + t.amt, 0); }
+function renderVehList() {
+  $('vehCount').textContent = SET.veh.length ? SET.veh.length + ' vehicles · ' + SET.veh.reduce((s, p) => s + (Number((SET.vinfo[p] || {}).seats) || 0), 0) + ' seats' : '';
+  const sorted = SET.veh.map((p, i) => ({ p, i, v: SET.vinfo[p] || {} })).sort((a, b) => Math.min(daysTo(a.v.reg) ?? 9e9, daysTo(a.v.ins) ?? 9e9) - Math.min(daysTo(b.v.reg) ?? 9e9, daysTo(b.v.ins) ?? 9e9));
+  $('vehList').innerHTML = sorted.map(({ p, i, v }) => '<button class="veh" onclick="vehForm(' + i + ')"><span class="mid"><b>' + esc(p) + '</b><small>' +
+    esc([v.vtype, v.model && v.model.split(' ')[0], v.seats ? v.seats + ' seats' : '', v.owner].filter(Boolean).join(' · ')) + '</small>' +
+    '<span>' + expBadge('Reg', v.reg) + expBadge('Ins', v.ins) + '</span></span><span class="amt"><small>Spent ' + today().slice(0, 4) + '</small>' + fmt(vehSpend(p)) + '</span></button>').join('') || '<div class="empty">No vehicles yet.</div>';
+}
+function vehForm(i) {
+  const p = i >= 0 ? SET.veh[i] : '', v = SET.vinfo[p] || {};
+  open2('<div class="grab"></div><div class="h"><span>' + (i >= 0 ? esc(p) : 'Add vehicle') + '</span><button class="chip" onclick="close2()">Close</button></div>' +
+    '<label for="vP">Bus number / plate no.</label><input id="vP" value="' + esc(p) + '" placeholder="e.g. AA / 79364 (Dubai)">' +
+    '<label for="vO">Owner</label><input id="vO" value="' + esc(v.owner || '') + '" placeholder="e.g. A V A PASSENGERS TRANSPORT">' +
+    '<div class="row"><div><label for="vT">Vehicle type</label><input id="vT" value="' + esc(v.vtype || '') + '" placeholder="ASHOK LEYLAND"></div><div><label for="vS">Seats</label><input id="vS" inputmode="numeric" value="' + esc(v.seats || '') + '"></div></div>' +
+    '<label for="vM">Model</label><input id="vM" value="' + esc(v.model || '') + '" placeholder="2012 (Ashok Leyland)">' +
+    '<div class="row"><div><label for="vR">Registration expiry</label><input type="date" id="vR" value="' + esc(v.reg || '') + '"></div><div><label for="vI">Insurance expiry</label><input type="date" id="vI" value="' + esc(v.ins || '') + '"></div></div>' +
+    '<div class="row"><button class="btn" onclick="saveVeh(' + i + ')">Save vehicle</button>' + (i >= 0 ? '<button class="btn r" style="flex:0 0 auto" onclick="delVeh(' + i + ')">Delete</button>' : '') + '</div>');
+}
+async function saveVeh(i) {
+  const plate = normPlate($('vP').value); if (!plate) return toast('Enter the plate number');
+  const old = i >= 0 ? SET.veh[i] : null;
+  if (SET.veh.some((x, j) => j !== i && plateKey(x) === plateKey(plate))) return toast('That vehicle is already listed');
+  const info = { plate, owner: $('vO').value.trim(), vtype: $('vT').value.trim(), model: $('vM').value.trim(), seats: parseInt($('vS').value, 10) || '', reg: $('vR').value, ins: $('vI').value };
+  if (old && old !== plate) {
+    // rename: keep past entries linked
+    const now = Date.now(), ch = TX.filter(t => t.veh === old);
+    ch.forEach(t => { t.veh = plate; t.updatedAt = now; t.dirty = 1; }); if (ch.length) await dbPutMany(ch);
+    delete SET.vinfo[old]; SET.veh[i] = plate;
+  } else if (!old) SET.veh.push(plate);
+  SET.vinfo[plate] = info; await saveSet(); close2(); render(); toast('Vehicle saved');
+}
+async function delVeh(i) { const v = SET.veh[i]; if (!confirm('Delete vehicle "' + v + '"? Past entries keep its name.')) return; SET.veh.splice(i, 1); delete SET.vinfo[v]; await saveSet(); close2(); render(); }
+function fleetPaste() {
+  open2('<div class="grab"></div><div class="h"><span>Paste fleet list</span><button class="chip" onclick="close2()">Close</button></div>' +
+    '<div class="note">Copy rows from Excel or Google Sheets and paste them here. Columns: <b>Plate · Owner · Type · Model · Seats · Registration expiry · Insurance expiry</b>. Dates like 17-09-2027. Existing vehicles are updated, new ones are added.</div>' +
+    '<textarea id="fpT" placeholder="Paste rows here"></textarea><div id="fpM"></div><button class="btn w" onclick="fleetImport()">Add / update vehicles</button>');
+}
+function parseDMY(s) {
+  s = String(s || '').trim(); let m;
+  if ((m = s.match(/^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{4})$/))) return m[3] + '-' + pad2(m[2]) + '-' + pad2(m[1]);
+  if ((m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/))) return s;
+  return '';
+}
+async function fleetImport() {
+  const lines = $('fpT').value.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  let n = 0; const bad = [];
+  lines.forEach(l => {
+    const c = (l.includes('\t') ? l.split('\t') : l.split(/\s{2,}/)).map(x => x.trim());
+    if (/plate|bus number/i.test(c[0])) return;
+    const reg = parseDMY(c[5]), ins = parseDMY(c[6]);
+    if (!c[0] || c.length < 7 || !reg || !ins) { bad.push(c[0] || l.slice(0, 20)); return; }
+    if (mergeVeh({ plate: c[0], owner: c[1], vtype: c[2], model: c[3], seats: parseInt(c[4], 10) || '', reg, ins })) n++;
+  });
+  if (!n) { $('fpM').innerHTML = '<div class="note warn">No rows could be read. Check there are 7 columns and dates look like 17-09-2027.</div>'; return; }
+  await saveSet(); close2(); render(); toast(n + ' vehicles saved' + (bad.length ? ' · skipped: ' + bad.join(', ') : ''), 4500);
+}
+function toggleTheme() { const r = document.documentElement; CFG.theme = r.dataset.theme === 'dark' ? 'light' : 'dark'; r.dataset.theme = CFG.theme; saveCfg(); }
+
+/* =====================================================================
+   ENTRY FORM
+   ===================================================================== */
+function setTyp(t) {
+  typ = t;
+  document.querySelectorAll('#fSeg button').forEach(b => { b.classList.toggle('on', b.dataset.t === t); b.style.display = editUid && b.dataset.t !== t ? 'none' : ''; });
+  const x = t === 'xfer';
+  $('lAcc').textContent = x ? 'Move money from' : 'Account';
+  $('catWrap').style.display = $('vatWrap').style.display = x ? 'none' : 'block';
+  $('lParty').textContent = t === 'in' ? 'Received from' : 'Paid to';
+  $('fDesc').placeholder = t === 'in' ? 'e.g. Customer payment, fares collected' : x ? 'Optional, e.g. Cash withdrawal for petty cash' : 'e.g. Diesel, Salik top-up, office rent';
+  xferHint(); vatInfo(); $('fWarn').style.display = 'none'; ack = new Set();
+}
+function chqVis() { const b = $('fAcc').value === 'Bank'; $('chqWrap').style.display = b && typ !== 'in' ? 'block' : 'none'; $('lChq').textContent = typ === 'xfer' ? 'Cheque no. (if withdrawn by cheque)' : 'Cheque no. (if paid by cheque)'; }
+function xferHint() {
+  chqVis();
+  const h = $('xHint');
+  if (typ !== 'xfer') { h.style.display = 'none'; return; }
+  const a = $('fAcc').value, o = a === 'Bank' ? 'Petty' : 'Bank';
+  h.style.display = 'block'; h.textContent = AN[a] + ' → ' + AN[o] + '. Both accounts are updated together.';
+}
+function fillCat(c, s, v) {
+  const cs = Object.keys(SET.cats); if (c && !cs.includes(c)) cs.push(c);
+  $('fCat').innerHTML = opts(cs, c, '— Choose —'); fillSub(s);
+  const vs = SET.veh.slice(); if (v && !vs.includes(v)) vs.push(v);
+  $('fVeh').innerHTML = opts(vs, v, '— None —');
+}
+function fillSub(s) { const ss = (SET.cats[$('fCat').value] || []).slice(); if (s && !ss.includes(s)) ss.push(s); $('fSub').innerHTML = opts(ss, s, '— None —'); }
+function fillLists() {
+  const d = {}, p = {};
+  live().slice(-800).forEach(t => { if (t.desc && !t.tr) d[t.desc] = t; if (t.party) p[t.party] = 1; });
+  $('dlDesc').innerHTML = Object.keys(d).slice(-150).map(x => '<option value="' + esc(x) + '">').join('');
+  $('dlParty').innerHTML = Object.keys(p).slice(-150).map(x => '<option value="' + esc(x) + '">').join('');
+}
+function smartFill() {
+  // repeat entry: copy category, vehicle and party from the last entry with the same description
+  if (editUid || typ === 'xfer') return;
+  const d = $('fDesc').value.trim().toLowerCase(); if (!d) return;
+  const m = live().filter(t => !t.tr && t.type === typ && (t.desc || '').toLowerCase() === d).sort(order).pop();
+  if (!m) return;
+  if (!$('fCat').value) fillCat(m.cat, m.sub, $('fVeh').value || m.veh);
+  if (!$('fParty').value && m.party) $('fParty').value = m.party;
+  if ($('fVat').value === 'none' && m.vat) { $('fVat').value = 'inc'; vatInfo(); }
+}
+function vatInfo() {
+  const a = parseAmt($('fAmt').value), m = $('fVat').value, el = $('vatI');
+  if (isNaN(a) || !a || m === 'none') { el.textContent = ''; return; }
+  if (m === 'inc') { const v = vatIncl(a); el.textContent = 'VAT ' + fmt(v, 'aed') + ' · Before VAT ' + fmt(a - v, 'aed'); }
+  else { const tot = Math.round(a * 1.05); el.textContent = 'VAT ' + fmt(tot - a, 'aed') + ' · Total to record ' + fmt(tot, 'aed'); }
+}
+function pickFile(cam) { $(cam ? 'fCam' : 'fFile').click(); }
+async function gotFile(el) {
+  const f = el.files[0]; el.value = ''; if (!f) return;
+  if (f.size > 15 * 1048576) return toast('That file is over 15 MB. Choose a smaller photo or PDF.');
+  try {
+    pendingFile = /^image\//.test(f.type) && !/gif|svg/.test(f.type) ? await shrinkImage(f) : { blob: f, name: f.name, type: f.type || 'application/octet-stream' };
+    rmRc = false; $('rcName').textContent = '📎 ' + pendingFile.name + ' (' + Math.round(pendingFile.blob.size / 1024) + ' KB)'; $('rcRm').style.display = '';
+  } catch (e) { toast('Could not read that file. Try another one.'); }
+}
+function rmFile() { pendingFile = null; rmRc = true; $('rcName').textContent = 'No file attached'; $('rcRm').style.display = 'none'; }
+function shrinkImage(f) {
+  return new Promise((res, rej) => {
+    const img = new Image(), u = URL.createObjectURL(f);
+    img.onload = () => {
+      const max = 1800, s = Math.min(1, max / Math.max(img.width, img.height));
+      const c = document.createElement('canvas'); c.width = Math.round(img.width * s); c.height = Math.round(img.height * s);
+      const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); g.drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(u);
+      c.toBlob(b => b ? res({ blob: b.size < f.size ? b : f, name: (f.name || 'receipt').replace(/\.[^.]+$/, '') + (b.size < f.size ? '.jpg' : (f.name.match(/\.[^.]+$/) || ['.jpg'])[0]), type: b.size < f.size ? 'image/jpeg' : f.type }) : rej(), 'image/jpeg', 0.82);
+    };
+    img.onerror = () => { URL.revokeObjectURL(u); res({ blob: f, name: f.name, type: f.type }); };
+    img.src = u;
+  });
+}
+
+function openTx(t, id) {
+  const x0 = id ? TX.find(z => z.uid === id) : null;
+  if (x0 && x0.pv) { pvForm(id); return; }
+  editUid = id || null; pendingFile = null; rmRc = false; ack = new Set();
+  const x = x0;
+  $('fT').textContent = x ? (isLocked(x.date) ? 'Entry (books closed)' : 'Edit entry') : 'New entry';
+  $('fDel').style.display = x && !isLocked(x.date) ? '' : 'none';
+  $('fSave').style.display = x && isLocked(x.date) ? 'none' : '';
+  $('fWarn').style.display = 'none';
+  fillLists();
+  if (x) {
+    typ = x.tr ? 'xfer' : x.type;
+    const src = x.tr ? TX.find(z => z.tr === x.tr && z.type === 'out' && !z.deleted) || x : x;
+    $('fAcc').value = src.acc; $('fAmt').value = fx(x.amt); $('fDate').value = x.date; $('fDesc').value = x.desc || '';
+    fillCat(x.cat, x.sub, x.veh); $('fParty').value = x.party || ''; $('fRef').value = x.ref || '';
+    $('fChq').value = (x.tr ? (TX.find(z => z.tr === x.tr && z.type === 'out') || x).chq : x.chq) || '';
+    $('fVat').value = x.vat ? 'inc' : 'none';
+    $('rcName').innerHTML = x.rcpt ? rcLink(x) : 'No file attached'; $('rcRm').style.display = x.rcpt ? '' : 'none';
+    $('fMore').open = true;
+  } else {
+    typ = t || 'out';
+    $('fAcc').value = view === 'book' && bookAcc !== 'All' ? bookAcc : (typ === 'out' ? (CFG.lastOutAcc || 'Petty') : (CFG.lastInAcc || 'Bank'));
+    $('fAmt').value = ''; $('fDate').value = today(); $('fDesc').value = ''; fillCat('', '', ''); $('fParty').value = ''; $('fRef').value = ''; $('fChq').value = '';
+    $('fVat').value = 'none'; $('rcName').textContent = 'No file attached'; $('rcRm').style.display = 'none'; $('fMore').open = false;
+  }
+  setTyp(typ);
+  $('ov').classList.add('on');
+  if (!x) setTimeout(() => $('fAmt').focus(), 120);
+}
+function rcLink(x) {
+  if (x.rcpt.local) return '<a class="lnk" href="#" onclick="viewLocal(\'' + x.uid + '\');return false">📎 ' + esc(x.rcpt.name || 'Receipt') + '</a> <span class="sub">waiting to upload</span>';
+  return '<a class="lnk" href="' + esc(x.rcpt.url || ('https://drive.google.com/file/d/' + x.rcpt.id + '/view')) + '" target="_blank" rel="noopener">📎 Open receipt in Drive</a>';
+}
+async function viewLocal(u) { const f = await dbGet('files', u); if (f) window.open(URL.createObjectURL(new Blob([f.buf || f.blob], { type: f.type })), '_blank'); }
+function closeTx() { $('ov').classList.remove('on'); editUid = null; pendingFile = null; }
+
+let saving = false, ack = new Set();
+async function saveTx() {
+  if (saving) return; saving = true; $('fSave').disabled = true;
+  try { await saveTx2(); } catch (e) { console.error(e); toast('Could not save. ' + (e && e.message || '')); }
+  finally { saving = false; $('fSave').disabled = false; }
+}
+function warn(m) { const w = $('fWarn'); w.innerHTML = m; w.style.display = 'block'; }
+async function saveTx2() {
+  let amt = parseAmt($('fAmt').value);
+  const date = $('fDate').value;
+  if (isNaN(amt) || amt <= 0) return warn('Enter an amount greater than 0, for example 125.50');
+  if (amt > 1e9) return warn('That amount looks too large. Please check it.');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return warn('Choose a date.');
+  if (isLocked(date)) return warn('The books are closed up to ' + SET.lockDate + '. Choose a later date, or change the closing date in Settings.');
+  const old = editUid ? TX.find(z => z.uid === editUid) : null;
+  if (old && isLocked(old.date)) return warn('This entry is in a closed period and cannot be changed.');
+  const acc = $('fAcc').value, desc = $('fDesc').value.trim(), refIn = $('fRef').value.trim(), now = Date.now();
+  const chq = acc === 'Bank' && typ !== 'in' ? normChq($('fChq').value) : '';
+  if (old && old.bk && (amt !== old.amt || acc !== old.acc)) return warn('This line came from the bank statement, so its amount and account must stay as the bank shows them (' + fmt(old.amt, 'aed') + ').');
+  if (chq) {
+    if (SET.chqX[chq]) return warn('Cheque ' + chq + ' is marked cancelled. Use another number, or undo the cancel in Cheques.');
+    const mine = old ? (old.tr ? TX.filter(z => z.tr === old.tr).map(z => z.uid) : [old.uid]) : [];
+    const dc = TX.find(t => !t.deleted && !mine.includes(t.uid) && t.chq === chq && t.acc === 'Bank' && t.type === 'out');
+    if (dc) return warn('Cheque ' + chq + ' is already used for ' + esc(dc.party || dc.desc) + ' (' + fmt(dc.amt, 'aed') + ').');
+  }
+  let vat = 0;
+  if (typ !== 'xfer') {
+    const vm = $('fVat').value;
+    if (vm === 'inc') vat = vatIncl(amt);
+    if (vm === 'add') { const tot = Math.round(amt * 1.05); vat = tot - amt; amt = tot; }
+    if (!$('fCat').value && !ack.has('cat')) { ack.add('cat'); return warn('No category chosen. Tap <b>Save entry</b> again to save without one.'); }
+    if (typ === 'out' && ['Diesel', 'Maintenance'].includes($('fCat').value) && !$('fVeh').value && !ack.has('veh')) { ack.add('veh'); return warn('No vehicle chosen. Diesel and maintenance should be linked to a vehicle so profit per vehicle is correct. Tap <b>Save entry</b> again to save without one.'); }
+  }
+  if (!old && !ack.has('dup')) {
+    const twin = live().find(t => !t.tr && t.date === date && t.amt === amt && t.acc === acc && t.type === typ);
+    if (twin) { ack.add('dup'); return warn('An entry for ' + fmt(amt, 'aed') + ' on this date already exists (' + esc(twin.ref) + ' ' + esc(twin.desc) + '). Tap <b>Save entry</b> again if this is a different payment.'); }
+  }
+  if (typ !== 'in' && !ack.has('neg') && !old) {
+    const from = acc, after = bal(from) - amt;
+    if (after < 0) { ack.add('neg'); return warn(AN[from] + ' will go below zero (' + fmt(after, 'aed') + '). Tap <b>Save entry</b> again to save anyway.'); }
+  }
+  const changed = [];
+  if (typ === 'xfer') {
+    const o = acc === 'Bank' ? 'Petty' : 'Bank';
+    const d = desc || 'Transfer ' + AN[acc] + ' → ' + AN[o];
+    if (old) {
+      const pair = TX.filter(z => z.tr === old.tr);
+      pair.forEach(z => { Object.assign(z, { date, desc: d, amt, ref: refIn || z.ref, acc: z.type === 'out' ? acc : o, updatedAt: now, dirty: 1 }); if (z.type === 'out') { if ((z.chq || '') !== chq) z.clr = ''; z.chq = z.acc === 'Bank' ? chq : ''; } changed.push(z); });
+    } else {
+      const tr = uid(), ref = refIn || nextRef('TR');
+      const base = { date, amt, desc: d, cat: 'Transfer', sub: '', veh: '', party: '', vat: 0, ref, tr, rcpt: null, by: CFG.device, createdAt: now, updatedAt: now, dirty: 1, deleted: false };
+      changed.push(Object.assign({ uid: uid(), acc, type: 'out', chq: acc === 'Bank' ? chq : '' }, base), Object.assign({ uid: uid(), acc: o, type: 'in' }, base, { createdAt: now + 1 }));
+    }
+  } else {
+    const rec = old || { uid: uid(), createdAt: now, by: CFG.device, deleted: false, ref: refIn || nextRef(typ === 'in' ? 'IN' : 'OUT') };
+    Object.assign(rec, { date, acc, type: typ, amt, vat, desc, cat: $('fCat').value, sub: $('fSub').value, veh: $('fVeh').value, party: $('fParty').value.trim(), updatedAt: now, dirty: 1 });
+    if (refIn) rec.ref = refIn;
+    if (typ !== 'in') { if ((rec.chq || '') !== chq) rec.clr = ''; rec.chq = chq; if (chq && !refIn && !old) rec.ref = 'CHQ-' + chq; }
+    if (pendingFile) {
+      await dbPut('files', { buf: await pendingFile.blob.arrayBuffer(), name: pendingFile.name, type: pendingFile.type }, rec.uid);
+      rec.rcpt = { local: 1, name: pendingFile.name };
+    } else if (rmRc) { rec.rcpt = null; await dbDel('files', rec.uid); }
+    else if (!old) rec.rcpt = null;
+    changed.push(rec);
+    if (typ === 'out') CFG.lastOutAcc = acc; else CFG.lastInAcc = acc; saveCfg();
+  }
+  await dbPutMany(changed);
+  changed.forEach(c => { if (!TX.includes(c)) TX.push(c); });
+  closeTx(); render();
+  toast(old ? 'Entry updated' : (typ === 'xfer' ? 'Transfer saved' : 'Saved ' + fmt(amt, 'aed')) + (CFG.url ? (navigator.onLine ? '' : ' · will sync when online') : ''));
+  syncSoon(800);
+}
+async function delTx() {
+  const x = TX.find(z => z.uid === editUid); if (!x) return;
+  if (isLocked(x.date)) return warn('This entry is in a closed period and cannot be deleted.');
+  if (!confirm(x.tr ? 'Delete this transfer? Both sides will be removed.' : 'Delete ' + x.ref + ' for ' + fmt(x.amt, 'aed') + '?')) return;
+  const now = Date.now(), list = x.tr ? TX.filter(z => z.tr === x.tr) : [x];
+  list.forEach(z => { z.deleted = true; z.updatedAt = now; z.dirty = 1; });
+  await dbPutMany(list); closeTx(); render(); toast('Entry deleted. It stays in the Sheet marked Deleted.'); syncSoon(800);
+}
+
+/* =====================================================================
+   SYNC — Google Apps Script web app (Sheets + Drive)
+   ===================================================================== */
+const syncState = { busy: false, err: '', timer: null };
+const pendingCount = () => TX.filter(t => t.dirty).length;
+function renderPill() {
+  const p = $('pill'), n = pendingCount();
+  let cls = 'ok', txt;
+  if (!CFG.url) { cls = 'off'; txt = 'Not connected'; }
+  else if (syncState.busy) { cls = 'wait busy'; txt = 'Syncing…'; }
+  else if (!navigator.onLine) { cls = 'off'; txt = n ? 'Offline · ' + n + ' waiting' : 'Offline'; }
+  else if (syncState.err) { cls = 'err'; txt = 'Sync problem'; }
+  else if (n) { cls = 'wait'; txt = n + ' waiting'; }
+  else txt = 'Synced';
+  p.className = 'pill ' + cls; $('pillT').textContent = txt;
+}
+function pillTap() {
+  if (!CFG.url) return show('set');
+  if (syncState.err) toast(syncState.err, 4500);
+  syncNow(true);
+}
+function syncSoon(ms) { clearTimeout(syncState.timer); syncState.timer = setTimeout(() => syncNow(false), ms || 1500); }
+
+async function api(body, cfg) {
+  const c = cfg || CFG;
+  const ctl = new AbortController(), to = setTimeout(() => ctl.abort(), 60000);
+  try {
+    // text/plain avoids a CORS pre-flight, which Apps Script does not answer
+    const r = await fetch(c.url, { method: 'POST', body: JSON.stringify(Object.assign({ key: c.key }, body)), headers: { 'Content-Type': 'text/plain;charset=utf-8' }, redirect: 'follow', signal: ctl.signal });
+    const txt = await r.text(); let j;
+    try { j = JSON.parse(txt); } catch (e) { throw new Error(/<html|<!DOCTYPE/i.test(txt) ? 'The Web App URL is not public. In Apps Script, deploy with "Who has access: Anyone".' : 'Unexpected reply from Google.'); }
+    if (!j.ok) throw new Error(j.error === 'bad_key' ? 'Connection key is wrong. Copy it again from the Sheet menu AVA Cash Book > Show connection key.' : j.error === 'run_setup_first' ? 'Run the setup function in Apps Script first.' : j.error || 'Google returned an error.');
+    return j;
+  } catch (e) {
+    if (e.name === 'AbortError') throw new Error('Google took too long to answer. It will retry.');
+    if (e instanceof TypeError) throw new Error(navigator.onLine ? 'Could not reach Google. Check the Web App URL.' : 'You are offline.');
+    throw e;
+  } finally { clearTimeout(to); }
+}
+function bufToB64(buf) { const u = new Uint8Array(buf); let s = ''; for (let i = 0; i < u.length; i += 0x8000) s += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000)); return btoa(s); }
+const clean = t => { const o = Object.assign({}, t); delete o.dirty; delete o.rev; if (o.rcpt && o.rcpt.local) o.rcpt = null; return o; };
+
+async function syncNow(manual) {
+  if (!CFG.url || syncState.busy) return;
+  if (!navigator.onLine) { renderPill(); if (manual) toast('You are offline. Entries are safe on this phone and will sync later.'); return; }
+  syncState.busy = true; renderPill();
+  try {
+    // 1) receipts first, so the Sheet row gets the Drive link
+    let rcErr = '';
+    for (const t of TX.filter(t => t.rcpt && t.rcpt.local && !t.deleted)) {
+      try {
+        const f = await dbGet('files', t.uid); if (!f) { t.rcpt = null; await dbPut('tx', t); continue; }
+        const buf = f.buf || await f.blob.arrayBuffer();
+        const r = await api({ op: 'receipt', uid: t.uid, ref: t.ref, date: t.date, cat: t.cat, amount: t.amt / 100, vat: t.vat > 0, name: f.name, mime: f.type, data: bufToB64(buf) });
+        t.rcpt = { id: r.id, url: r.url, name: r.name }; t.dirty = 1; t.updatedAt = Math.max(t.updatedAt + 1, Date.now());
+        await dbPut('tx', t); await dbDel('files', t.uid);
+      } catch (e) {
+        if (/offline|key|public|setup/i.test(e.message)) throw e;
+        rcErr = 'A receipt for ' + t.ref + ' could not upload yet (' + e.message + '). It will retry.';
+      }
+    }
+    // 2) push changed rows + settings, pull everything changed elsewhere
+    const dirty = TX.filter(t => t.dirty), sent = {};
+    let totalPulled = 0;
+    for (let i = 0; i === 0 || i < dirty.length; i += 300) {
+      const batch = dirty.slice(i, i + 300);
+      batch.forEach(t => sent[t.uid] = t.updatedAt);
+      const r = await api({ op: 'sync', device: CFG.device, since: CFG.rev || 0, records: batch.map(clean), settings: SET });
+      const upd = [], byId = new Map(TX.map(z => [z.uid, z]));
+      for (const res of r.results) {
+        const t = byId.get(res.uid); if (!t) continue;
+        if (res.status === 'ok' && t.updatedAt === sent[t.uid]) { t.dirty = 0; upd.push(t); }
+        if (res.status === 'server_newer' && res.record) { Object.assign(t, res.record, { dirty: 0 }); upd.push(t); }
+        if (res.status === 'error') console.warn('Row rejected', res);
+      }
+      for (const s of r.changes || []) {
+        const t = byId.get(s.uid);
+        if (!t) { s.dirty = 0; TX.push(s); byId.set(s.uid, s); upd.push(s); totalPulled++; }
+        else if (!t.dirty && (s.updatedAt >= t.updatedAt || s.rev > (t.rev || 0))) {
+          const keepLocal = t.rcpt && t.rcpt.local ? t.rcpt : null;
+          Object.assign(t, s, { dirty: 0 }); if (keepLocal) { t.rcpt = keepLocal; t.dirty = 1; }
+          upd.push(t); totalPulled++;
+        }
+      }
+      if (upd.length) await dbPutMany(upd);
+      if (r.settings && r.settings.updatedAt > (SET.updatedAt || 0)) { SET = Object.assign(SET, r.settings); SET.vinfo = SET.vinfo || {}; v3Migrate(); await dbPut('meta', SET, 'settings'); }
+      CFG.rev = r.rev; if (r.sheetUrl) CFG.sheetUrl = r.sheetUrl;
+      if (dirty.length <= 300) break;
+    }
+    CFG.lastSync = Date.now(); await saveCfg();
+    syncState.err = rcErr;
+    if (manual) toast(pendingCount() ? 'Synced. ' + pendingCount() + ' still waiting.' : 'All entries are in Google Sheets');
+    else if (totalPulled) toast(totalPulled + ' update' + (totalPulled > 1 ? 's' : '') + ' from other devices');
+  } catch (e) {
+    syncState.err = e.message || String(e);
+    if (manual) toast(syncState.err, 5000);
+  } finally {
+    syncState.busy = false; render();
+    if (pendingCount() && navigator.onLine && !syncState.err) syncSoon(3000);
+  }
+}
+
+function connectForm() {
+  open2('<div class="grab"></div><div class="h"><span>Connect Google Sheets &amp; Drive</span><button class="chip" onclick="close2()">Close</button></div>' +
+    '<div class="note">Follow the setup guide once on a computer. It gives you a <b>Web App URL</b> and a <b>connection key</b>. Use the same two on every phone.</div>' +
+    '<label for="cUrl">Web App URL</label><input id="cUrl" placeholder="https://script.google.com/macros/s/…/exec" value="' + esc(CFG.url || '') + '" autocomplete="off">' +
+    '<label for="cKey">Connection key</label><input id="cKey" placeholder="XXXX-XXXX-XXXX-XXXX-XXXX-XXXX" value="' + esc(CFG.key || '') + '" autocomplete="off" autocapitalize="characters">' +
+    '<label for="cDev">Name for this device</label><input id="cDev" value="' + esc(CFG.device || '') + '" placeholder="e.g. Ahmed phone">' +
+    '<div class="hint">Shown in the Sheet so you know who entered each line.</div><div id="cMsg"></div>' +
+    '<div class="row"><button class="btn" id="cBtn" onclick="doConnect()">Test &amp; connect</button>' + (CFG.url ? '<button class="btn g" style="flex:0 0 auto" onclick="disconnect()">Disconnect</button>' : '') + '</div>');
+}
+async function doConnect() {
+  const url = $('cUrl').value.trim(), key = $('cKey').value.trim().toUpperCase(), dev = $('cDev').value.trim() || CFG.device;
+  const msg = m => $('cMsg').innerHTML = '<div class="note warn">' + m + '</div>';
+  if (!/^https:\/\/script\.google(usercontent)?\.com\/.+/.test(url)) return msg('The Web App URL should start with https://script.google.com/macros/s/ and end with /exec');
+  if (!/\/exec\/?$/.test(url)) return msg('Use the URL that ends with <b>/exec</b> (not /dev). Find it in Apps Script under Deploy > Manage deployments.');
+  if (key.length < 10) return msg('Paste the full connection key.');
+  if (!navigator.onLine) return msg('You need internet to connect the first time.');
+  $('cBtn').disabled = true; $('cBtn').textContent = 'Testing…';
+  try {
+    const r = await api({ op: 'ping' }, { url, key });
+    const changed = CFG.url && CFG.url !== url;
+    Object.assign(CFG, { url, key, device: dev, sheetUrl: r.sheetUrl, folderUrl: r.folderUrl });
+    if (changed) { CFG.rev = 0; TX.forEach(t => t.dirty = 1); await dbPutMany(TX); }
+    await saveCfg(); close2(); toast('Connected to "' + r.sheet + '"');
+    try { navigator.storage && navigator.storage.persist && navigator.storage.persist(); } catch (e) { }
+    syncState.err = ''; render(); syncNow(true);
+  } catch (e) { msg(esc(e.message)); }
+  finally { const b = $('cBtn'); if (b) { b.disabled = false; b.textContent = 'Test & connect'; } }
+}
+async function disconnect() {
+  if (pendingCount() && !confirm(pendingCount() + ' entries have not reached Google yet. Disconnect anyway? They stay on this phone.')) return;
+  delete CFG.url; delete CFG.key; CFG.rev = 0; await saveCfg(); close2(); render(); toast('Disconnected');
+}
+
+/* generic sheet */
+function open2(html) { $('sh2').innerHTML = html; $('ov2').classList.add('on'); }
+function close2() { $('ov2').classList.remove('on'); }
+
+/* =====================================================================
+   BACKUP / EXPORT / IMPORT
+   ===================================================================== */
+function download(name, data, mime) {
+  const b = data instanceof Blob ? data : new Blob([data], { type: mime });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = name; document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+}
+function exportCsv(period) {
+  let L = live().sort(order);
+  let name = 'AVA-cash-book-' + today();
+  if (period) { const [f, t] = periodRange(repPeriod); L = L.filter(x => x.date >= f && x.date <= t); name = 'AVA-cash-book-' + f + '_to_' + t; }
+  const run = { Bank: SET.ob.Bank || 0, Petty: SET.ob.Petty || 0 }, all = live().sort(order), balMap = {};
+  all.forEach(x => { run[x.acc] += sgn(x); balMap[x.uid] = run[x.acc]; });
+  const head = ['Date', 'Ref', 'Account', 'Type', 'Description', 'Party', 'Category', 'Sub-category', 'Vehicle', 'In', 'Out', 'VAT', 'Net of VAT', 'Account balance', 'Cheque no.', 'Cleared on', 'Voucher', 'Receipt', 'Entered by'];
+  const rows = [head].concat(L.map(x => [x.date, x.ref, AN[x.acc], x.tr ? 'Transfer' : x.type === 'in' ? 'In' : 'Out', x.desc, x.party, x.cat, x.sub, x.veh,
+    x.type === 'in' ? fx(x.amt) : '', x.type === 'out' ? fx(x.amt) : '', x.vat ? fx(x.vat) : '', fx(x.amt - (x.vat || 0)), fx(balMap[x.uid]), x.chq || '', x.clr || '', x.pv || '', x.rcpt && x.rcpt.url || (x.rcpt ? 'On phone' : ''), x.by]));
+  download(name + '.csv', '\ufeff' + rows.map(r => r.map(c => '"' + String(c == null ? '' : c).replace(/"/g, '""') + '"').join(',')).join('\r\n'), 'text/csv');
+}
+function backup() {
+  download('AVA-backup-' + today() + '.json', JSON.stringify({ app: 'ava-cashbook', version: VERSION, exported: new Date().toISOString(), settings: SET, tx: TX.map(clean) }, null, 1), 'application/json');
+  toast('Backup downloaded. Save a copy in Google Drive.');
+}
+async function restore(el) {
+  const f = el.files[0]; el.value = ''; if (!f) return;
+  let d; try { d = JSON.parse(await f.text()); } catch (e) { return toast('That file is not a valid backup.'); }
+  if (d.app === 'ava-cashbook' && Array.isArray(d.tx)) {
+    if (!confirm('Add ' + d.tx.length + ' entries from this backup? Entries already on this phone are kept; matching entries are updated.')) return;
+    const now = Date.now(), add = [];
+    d.tx.forEach(r => { const cur = TX.find(z => z.uid === r.uid); if (!cur || r.updatedAt > cur.updatedAt) { const n = Object.assign({}, r, { dirty: 1 }); if (cur) Object.assign(cur, n); else { TX.push(n); } add.push(cur || n); } });
+    if (d.settings) { mergeSettings(d.settings); SET.updatedAt = now; v3Migrate(); await dbPut('meta', SET, 'settings'); }
+    await dbPutMany(add); render(); toast('Restored ' + add.length + ' entries'); syncSoon();
+  } else if (Array.isArray(d.tx)) {
+    if (!confirm('This is a file from the first AVA Cash Book. Import its ' + d.tx.length + ' entries?')) return;
+    const n = await importLegacy(d); render(); toast('Imported ' + n + ' entries'); syncSoon();
+  } else toast('That file is not an AVA Cash Book backup.');
+}
+async function importLegacy(d) {
+  // old app: amounts in AED floats, numeric ids, transfers linked by numeric `tr`
+  const toF = v => Math.round((Number(v) || 0) * 100), now = Date.now(), trMap = {}, out = [];
+  const seen = new Set(TX.map(t => t.legacy).filter(Boolean));
+  (d.tx || []).forEach((o, i) => {
+    const key = 'v1:' + o.id; if (seen.has(key)) return;
+    let tr = ''; if (o.tr) tr = trMap[o.tr] || (trMap[o.tr] = uid());
+    out.push({ uid: uid(), legacy: key, date: o.date, acc: o.acc === 'Petty' ? 'Petty' : 'Bank', type: o.type === 'in' ? 'in' : 'out', amt: toF(o.amt), vat: toF(o.vat),
+      desc: o.desc || '', party: '', cat: o.cat || '', sub: o.sub || '', veh: o.veh || '', ref: o.ref || '', tr, rcpt: null, by: CFG.device + ' (imported)',
+      createdAt: now + i, updatedAt: now, dirty: 1, deleted: false });
+  });
+  if (d.ob && !SET.ob.Bank && !SET.ob.Petty) SET.ob = { Bank: toF(d.ob.Bank), Petty: toF(d.ob.Petty) };
+  if (d.cats) Object.keys(d.cats).forEach(k => { SET.cats[k] = Array.from(new Set((SET.cats[k] || []).concat(d.cats[k] || []))); });
+  if (Array.isArray(d.veh)) SET.veh = Array.from(new Set(SET.veh.concat(d.veh)));
+  SET.updatedAt = now; await dbPut('meta', SET, 'settings');
+  if (out.length) { await dbPutMany(out); TX.push(...out); }
+  return out.length;
+}
+
+/* =====================================================================
+   PIN LOCK (stored as a salted SHA-256 hash on this device only)
+   ===================================================================== */
+let pinBuf = '', pinMode = 'unlock', pinFirst = '', hiddenAt = 0, pinFails = 0;
+async function hash(p) { const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode((CFG.pinSalt || '') + ':' + p)); return Array.from(new Uint8Array(b), x => x.toString(16).padStart(2, '0')).join(''); }
+function lockUI(mode, title) {
+  pinMode = mode; pinBuf = ''; $('lockT').textContent = title; $('lockMsg').textContent = ''; dots();
+  $('pad').innerHTML = [1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => '<button onclick="pinKey(\'' + n + '\')">' + n + '</button>').join('') +
+    (mode === 'unlock' ? '<span></span>' : '<button class="x" onclick="unlockDone()">Cancel</button>') + '<button onclick="pinKey(\'0\')">0</button><button class="x" onclick="pinKey(\'del\')">Delete</button>';
+  $('lock').classList.add('on');
+}
+function dots() { $('pins').innerHTML = [0, 1, 2, 3].map(i => '<i class="' + (i < pinBuf.length ? 'f' : '') + '"></i>').join(''); }
+async function pinKey(k) {
+  if (k === 'del') { pinBuf = pinBuf.slice(0, -1); return dots(); }
+  if (pinBuf.length >= 4) return;
+  pinBuf += k; dots(); if (pinBuf.length < 4) return;
+  if (pinMode === 'unlock') {
+    if (await hash(pinBuf) === CFG.pin) { pinFails = 0; unlockDone(); }
+    else { pinFails++; pinBuf = ''; dots(); $('lockMsg').textContent = pinFails >= 5 ? 'Wrong PIN. Wait 30 seconds.' : 'Wrong PIN. Try again.'; if (pinFails >= 5) { $('pad').style.pointerEvents = 'none'; setTimeout(() => { $('pad').style.pointerEvents = ''; pinFails = 0; $('lockMsg').textContent = ''; }, 30000); } }
+  } else if (pinMode === 'new') { pinFirst = pinBuf; lockUI('confirm', 'Enter the new PIN again'); }
+  else if (pinMode === 'confirm') {
+    if (pinBuf !== pinFirst) return lockUI('new', 'PINs did not match. Choose a 4-digit PIN');
+    const s = new Uint8Array(8); crypto.getRandomValues(s); CFG.pinSalt = Array.from(s, x => x.toString(16)).join('');
+    CFG.pin = await hash(pinBuf); await saveCfg(); unlockDone(); toast('PIN is on'); render();
+  }
+}
+function unlockDone() { $('lock').classList.remove('on'); pinBuf = ''; }
+function setPin() { lockUI('new', 'Choose a 4-digit PIN'); }
+async function removePin() { if (!CFG.pin) return toast('No PIN is set'); if (!confirm('Turn off the PIN?')) return; delete CFG.pin; await saveCfg(); render(); toast('PIN is off'); }
+
+/* =====================================================================
+   START
+   ===================================================================== */
+async function checkUpdate() {
+  if (!('serviceWorker' in navigator)) return toast('Updates load automatically when you reopen the app.');
+  const r = await navigator.serviceWorker.getRegistration(); if (r) { await r.update(); toast('Checked. If there is an update it loads next time you open the app.'); }
+}
+async function start() {
+  try { db = await openDB(); }
+  catch (e) { document.body.innerHTML = '<div style="padding:30px;font:16px sans-serif">This browser blocks offline storage (private mode?). Open AVA Cash Book in normal Chrome or Safari.</div>'; return; }
+  await loadAll();
+  if (CFG.theme) document.documentElement.dataset.theme = CFG.theme;
+  else if (matchMedia('(prefers-color-scheme: dark)').matches) document.documentElement.dataset.theme = 'dark';
+  if (CFG.pin) lockUI('unlock', 'Enter your PIN');
+  render();
+  window.addEventListener('online', () => { renderPill(); syncNow(false); });
+  window.addEventListener('offline', renderPill);
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) hiddenAt = Date.now();
+    else {
+      if (CFG.pin && hiddenAt && Date.now() - hiddenAt > 3 * 60e3) lockUI('unlock', 'Enter your PIN');
+      syncNow(false);
+    }
+  });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeTx(); close2(); } });
+  setInterval(() => { if (!document.hidden) syncNow(false); }, 120e3);
+  syncNow(false);
+  if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => { });
+}
+/* =====================================================================
+   v3 — cheque register, payment vouchers, bank statement import
+   ===================================================================== */
+const CO_DEFAULT = { name: 'AVA PASSENGERS TRANSPORT', addr: 'P.O. Box 91977, Dubai, UAE | Phone: 00971 4 3439666 | Email: Contact@avarental.ae' };
+const V3_CATS = { 'Vehicle hire (subcontract)': ['Bus hire', 'Pick-up hire', 'Salik recharge'], 'Cheque payments': ['To be assigned'], 'Returned cheque': [] };
+const normChq = c => { const d = String(c || '').replace(/\D/g, ''); return d ? d.padStart(6, '0') : ''; };
+const plain = f => (Math.round(f) / 100).toFixed(2);
+const dmy2 = d => d ? d.slice(8, 10) + '/' + d.slice(5, 7) + '/' + d.slice(0, 4) : '';
+const dayDiff = (a, b) => Math.abs((new Date(a + 'T00:00:00') - new Date(b + 'T00:00:00')) / 864e5);
+
+function v3Migrate() {
+  let ch = false;
+  if (!SET.v3) {
+    Object.keys(V3_CATS).forEach(k => { if (!SET.cats[k]) SET.cats[k] = V3_CATS[k].slice(); });
+    SET.v3 = 1; ch = true;
+  }
+  if (!SET.v31) {   // v3.1: AVA's own category list replaces the generic starter list
+    SET.cats = JSON.parse(JSON.stringify(DEFAULT_CATS));
+    SET.v31 = 1; if (SET.updatedAt) SET.updatedAt = Date.now(); ch = true;
+  }
+  if (!SET.v32) {   // v3.2: tyres, batteries and parts move from Permits to a new Maintenance category
+    const mv = ['New Tires', 'Used Tires', 'Batteries', 'Spare Parts', 'Al Nad'];
+    if (!SET.cats['Maintenance']) SET.cats['Maintenance'] = [];
+    mv.forEach(s => {
+      if (SET.cats['Permits']) SET.cats['Permits'] = SET.cats['Permits'].filter(z => z !== s);
+      if (!SET.cats['Maintenance'].includes(s)) SET.cats['Maintenance'].push(s);
+    });
+    const fix = (TX || []).filter(t => t.cat === 'Permits' && mv.includes(t.sub) && !isLocked(t.date));
+    fix.forEach(t => { t.cat = 'Maintenance'; t.updatedAt = Date.now(); t.dirty = 1; });
+    if (fix.length) dbPutMany(fix);
+    SET.v32 = 1; if (SET.updatedAt) SET.updatedAt = Date.now(); ch = true;
+  }
+  if (!SET.chqX) { SET.chqX = {}; ch = true; }
+  if (!SET.co) { SET.co = Object.assign({}, CO_DEFAULT); ch = true; }
+  return ch;
+}
+
+/* ---------------- cheque status ---------------- */
+function returnedSet() { return new Set(live().filter(t => t.acc === 'Bank' && t.type === 'in' && t.chq).map(t => t.chq)); }
+function pendingChq(upTo) {
+  const ret = returnedSet();
+  return live().filter(t => t.acc === 'Bank' && t.type === 'out' && t.chq && !ret.has(t.chq) &&
+    (!upTo || t.date <= upTo) && (!t.clr || (upTo && t.clr > upTo)));
+}
+// what the bank statement should show = book balance + cheques written but not yet paid by the bank
+const stmtBal = upTo => bal('Bank', upTo) + pendingChq(upTo).reduce((s, t) => s + t.amt, 0);
+
+function chqData() {
+  const ret = returnedSet(), X = SET.chqX || {};
+  const rows = live().filter(t => t.acc === 'Bank' && t.type === 'out' && t.chq)
+    .map(t => ({ t, n: t.chq, st: ret.has(t.chq) ? 'returned' : t.clr ? 'cleared' : 'pending' }));
+  const used = new Set(rows.map(r => r.n).concat(Object.keys(X)));
+  const nums = Array.from(used).map(Number).filter(n => n > 0), gaps = [];
+  if (nums.length) {
+    const mn = Math.min.apply(null, nums), mx = Math.max.apply(null, nums), w = String(rows[0] ? rows[0].n : '').length || 6;
+    if (mx - mn < 3000) for (let i = mn; i <= mx; i++) { const k = String(i).padStart(w, '0'); if (!used.has(k)) gaps.push(k); }
+  }
+  return { rows, gaps, X };
+}
+
+let chqFilter = 'pending';
+function renderChq() {
+  const { rows, gaps, X } = chqData();
+  const pend = rows.filter(r => r.st === 'pending'), pAmt = pend.reduce((s, r) => s + r.t.amt, 0);
+  $('cqPend').textContent = fmt(pAmt, 'aed');
+  $('cqPendN').textContent = pend.length ? pend.length + ' cheque' + (pend.length === 1 ? '' : 's') + ' written, not yet paid by the bank' : 'Every cheque has cleared';
+  $('cqStmt').textContent = fmt(stmtBal(), 'aed');
+  $('cqBook').textContent = fmt(bal('Bank'), 'aed');
+  const F = [['pending', 'To clear (' + pend.length + ')'], ['cleared', 'Cleared'], ['missing', 'Missing numbers (' + gaps.length + ')'], ['cancelled', 'Cancelled (' + Object.keys(X).length + ')'], ['all', 'All']];
+  $('cqChips').innerHTML = F.map(([k, l]) => '<button class="chip ' + (chqFilter === k ? 'on' : '') + '" onclick="chqFilter=\'' + k + '\';renderChq()">' + l + '</button>').join('');
+  let h = '';
+  if (chqFilter === 'missing') {
+    h = gaps.length ? '<div class="note" style="margin:10px 0">These cheque numbers are not in the books and not marked cancelled. Check the cheque book stubs: each one is either cancelled, still with someone, or a payment you have not entered.</div>' +
+      gaps.map(n => '<div class="it"><span class="ic out">?</span><span class="mid"><b>Cheque ' + n + '</b><small>Not entered · not cancelled</small></span><button class="chip" onclick="chqCancelForm(\'' + n + '\')">Mark cancelled</button></div>').join('')
+      : '<div class="empty">No gaps in your cheque numbers.</div>';
+  } else if (chqFilter === 'cancelled') {
+    const k = Object.keys(X).sort();
+    h = k.length ? k.map(n => '<div class="it"><span class="ic xf">✕</span><span class="mid"><b>Cheque ' + n + '</b><small>' + esc(X[n].note || 'Cancelled') + (X[n].date ? ' · ' + dmy(X[n].date) : '') + '</small></span><button class="chip" onclick="chqUncancel(\'' + n + '\')">Undo</button></div>').join('')
+      : '<div class="empty">No cancelled cheques recorded.</div>';
+  } else {
+    const list = rows.filter(r => chqFilter === 'all' || r.st === chqFilter || (chqFilter === 'cleared' && r.st === 'returned')).sort((a, b) => b.n < a.n ? -1 : 1);
+    const lim = chqFilter === 'pending' ? 1e9 : 150;
+    h = list.slice(0, lim).map(({ t, st }) => {
+      const bd = st === 'pending' ? '<span class="badge soon">To clear · written ' + dmy(t.date) + '</span>' : st === 'returned' ? '<span class="badge bad">Returned</span>' : '<span class="badge ok">Cleared ' + dmy(t.clr) + '</span>';
+      return '<button class="it" onclick="chqAct(\'' + t.uid + '\')"><span class="ic ' + (st === 'pending' ? 'out' : st === 'returned' ? 'xf' : 'in') + '" style="font-size:11px">' + t.chq.slice(-3) + '</span><span class="mid"><b>' + esc(t.party || t.desc || 'Cheque') + '</b><small>Chq ' + esc(t.chq) + (t.pv ? ' · ' + esc(t.pv) : '') + ' · ' + esc(t.cat || 'Uncategorised') + '</small>' + bd + '</span><span class="amt out">' + fmt(t.amt) + '</span></button>';
+    }).join('') || '<div class="empty">' + (chqFilter === 'pending' ? 'No cheques waiting to clear.' : 'No cheques yet. Cheques appear here when you enter a cheque number on a payment or import a bank statement.') + '</div>';
+  }
+  $('cqList').innerHTML = h;
+}
+
+function chqAct(uid) {
+  const t = TX.find(z => z.uid === uid); if (!t) return;
+  const ret = returnedSet().has(t.chq), st = ret ? 'Returned by bank' : t.clr ? 'Cleared on ' + dmy(t.clr) : 'Waiting to clear';
+  const lock = isLocked(t.date);
+  open2('<div class="grab"></div><div class="h"><span>Cheque ' + esc(t.chq) + '</span><button class="chip" onclick="close2()">Close</button></div>' +
+    '<div class="kv"><span>Paid to</span><b>' + esc(t.party || '—') + '</b></div>' +
+    '<div class="kv"><span>Amount</span><b>' + fmt(t.amt, 'aed') + '</b></div>' +
+    '<div class="kv"><span>Written on</span><b>' + dmy(t.date) + '</b></div>' +
+    (t.pv ? '<div class="kv"><span>Voucher</span><b>' + esc(t.pv) + '</b></div>' : '') +
+    '<div class="kv"><span>For</span><b style="white-space:normal;text-align:right">' + esc(t.desc || t.cat || '—') + '</b></div>' +
+    '<div class="kv tot"><span>Status</span><b class="' + (t.clr ? 'cin' : 'cout') + '">' + st + '</b></div>' +
+    (!t.clr && !ret ? '<div class="row" style="margin-top:12px"><div><label for="caD">Cleared on (from bank statement)</label><input type="date" id="caD" value="' + today() + '"></div><div style="flex:0 0 auto"><label>&nbsp;</label><button class="btn ok" onclick="chqClear(\'' + uid + '\')">Mark cleared</button></div></div>' : '') +
+    (t.clr && !t.bk ? '<button class="btn g w" style="margin-top:10px" onclick="chqUnclear(\'' + uid + '\')">Mark as not cleared</button>' : '') +
+    '<div class="row" style="margin-top:10px">' + (t.pv ? '<button class="btn" onclick="pvView(\'' + uid + '\')">View voucher</button>' : '') + '<button class="btn g" onclick="close2();openTx(null,\'' + uid + '\')">Open entry</button></div>' +
+    (!t.clr && !lock ? '<button class="btn r w" style="margin-top:10px" onclick="chqCancel(\'' + uid + '\')">Cancel or stop this cheque</button>' : ''));
+}
+async function chqSave(t) { t.updatedAt = Date.now(); t.dirty = 1; await dbPut('tx', t); syncSoon(800); }
+async function chqClear(uid) {
+  const t = TX.find(z => z.uid === uid), d = $('caD').value;
+  if (!d) return toast('Choose the date the bank paid it');
+  if (d < t.date) return toast('The clearing date cannot be before the cheque was written (' + dmy(t.date) + ')');
+  t.clr = d; await chqSave(t); close2(); render(); toast('Cheque ' + t.chq + ' cleared');
+}
+async function chqUnclear(uid) { const t = TX.find(z => z.uid === uid); t.clr = ''; await chqSave(t); close2(); render(); }
+async function chqCancel(uid) {
+  const t = TX.find(z => z.uid === uid);
+  if (isLocked(t.date)) return toast('This cheque is in a closed period');
+  if (!confirm('Cancel cheque ' + t.chq + ' for ' + fmt(t.amt, 'aed') + '?\n\nThe payment is removed from the books and the cheque is listed as cancelled. If someone still holds it, ask the bank to stop it.')) return;
+  t.deleted = true; await chqSave(t);
+  SET.chqX[t.chq] = { note: 'Cancelled – was ' + (t.party || t.desc || '') + ' ' + fx(t.amt), date: today() };
+  await saveSet(); close2(); render(); toast('Cheque ' + t.chq + ' cancelled');
+}
+function chqCancelForm(n) {
+  open2('<div class="grab"></div><div class="h"><span>Record a cancelled cheque</span><button class="chip" onclick="close2()">Close</button></div>' +
+    '<label for="ccN">Cheque no.</label><input id="ccN" inputmode="numeric" value="' + esc(n) + '" placeholder="e.g. 001802">' +
+    '<label for="ccR">Reason</label><select id="ccR"><option>Cancelled – written wrongly</option><option>Spoiled leaf</option><option>Stopped at bank</option><option>Security cheque (not for payment)</option><option>Other</option></select>' +
+    '<label for="ccT">Note (optional)</label><input id="ccT" placeholder="e.g. torn leaf kept in file">' +
+    '<button class="btn w" onclick="chqCancelSave()">Save</button>');
+}
+async function chqCancelSave() {
+  const n = normChq($('ccN').value); if (!n) return toast('Enter the cheque number');
+  if (live().some(t => t.chq === n && t.acc === 'Bank')) return toast('Cheque ' + n + ' is used by an entry. Open it from the list to cancel it.');
+  SET.chqX[n] = { note: $('ccR').value + ($('ccT').value.trim() ? ' – ' + $('ccT').value.trim() : ''), date: today() };
+  await saveSet(); close2(); render(); toast('Cheque ' + n + ' marked cancelled');
+}
+async function chqUncancel(n) { if (!confirm('Remove cheque ' + n + ' from the cancelled list?')) return; delete SET.chqX[n]; await saveSet(); render(); }
+
+/* ---------------- amount in words ---------------- */
+function amountWords(fils) {
+  const ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+  const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+  const two = n => n < 20 ? ones[n] : tens[Math.floor(n / 10)] + (n % 10 ? ' ' + ones[n % 10] : '');
+  const three = n => { const h = Math.floor(n / 100), r = n % 100; return (h ? ones[h] + ' Hundred' + (r ? ' and ' : '') : '') + (r ? two(r) : ''); };
+  const words = n => { if (!n) return 'Zero'; const p = []; [[1e9, 'Billion'], [1e6, 'Million'], [1e3, 'Thousand'], [1, '']].forEach(([v, l]) => { const k = Math.floor(n / v); n %= v; if (k) p.push(three(k) + (l ? ' ' + l : '')); }); return p.join(' '); };
+  fils = Math.round(fils); const d = Math.floor(fils / 100), f = fils % 100;
+  return words(d) + ' Dirham' + (d === 1 ? '' : 's') + (f ? ' and ' + two(f) + ' Fils' : '') + ' Only';
+}
+
+/* ---------------- payment vouchers ---------------- */
+let PV = null;
+function nextPv(date) {
+  const pre = 'PV-' + date.slice(5, 7) + '/' + date.slice(0, 4) + '-'; let mx = 0;
+  TX.forEach(t => { if (t.pv && t.pv.startsWith(pre)) { const n = parseInt(t.pv.slice(pre.length), 10); if (n > mx) mx = n; } });
+  return pre + String(mx + 1).padStart(2, '0');
+}
+function pvAutoNo() { if (!PV.uid && PV.autoNo) { $('pvNo').value = nextPv($('pvD').value || today()); } }
+function pvForm(uid) {
+  const x = uid ? TX.find(z => z.uid === uid) : null;
+  if (x && isLocked(x.date)) { pvView(uid); return; }
+  PV = { uid: uid || null, autoNo: !x, lines: x && x.lines && x.lines.length ? x.lines.map(l => ({ d: l.d, f: l.f || '', t: l.t || '', q: String(l.q), u: fx(l.u) })) : [{ d: '', f: '', t: '', q: '1', u: '' }] };
+  if (x && !(x.lines && x.lines.length)) PV.lines = [{ d: x.desc || x.cat || '', f: '', t: '', q: '1', u: fx(x.amt - (x.vat || 0)) }];
+  const d = x ? x.date : today();
+  fillLists();
+  open2('<div class="grab"></div><div class="h"><span>' + (x ? 'Edit voucher' : 'New payment voucher') + '</span><button class="chip" onclick="close2()">Close</button></div>' +
+    '<div class="row"><div><label for="pvNo">Voucher no.</label><input id="pvNo" value="' + esc(x ? (x.pv || '') : nextPv(d)) + '" oninput="PV.autoNo=false"></div><div><label for="pvD">Date</label><input type="date" id="pvD" value="' + d + '" onchange="pvAutoNo()"></div></div>' +
+    '<label for="pvPay">Payee</label><input id="pvPay" list="dlParty" value="' + esc(x ? x.party || '' : '') + '" placeholder="e.g. SPEED BADSHAH" autocomplete="off">' +
+    '<label>Items</label><div id="pvL"></div><button class="btn g w" style="margin:0 0 12px" onclick="pvAdd()">Add another line</button>' +
+    '<div class="row"><div><label for="pvVat">VAT</label><select id="pvVat" onchange="pvTot()"><option value="0">0% · no VAT</option><option value="5">5% on subtotal</option></select></div>' +
+    '<div><label for="pvAcc">Paid from</label><select id="pvAcc"><option value="Bank">Bank Account</option><option value="Petty">Petty Cash</option></select></div></div>' +
+    '<div class="row"><div><label for="pvM">Payment method</label><select id="pvM" onchange="pvMeth()"><option>Cheque</option><option>Bank transfer</option><option>Cash</option></select></div>' +
+    '<div id="pvChqW"><label for="pvChq">Cheque no.</label><input id="pvChq" inputmode="numeric" value="' + esc(x && x.chq || '') + '" placeholder="e.g. 001858"></div></div>' +
+    '<div class="row"><div><label for="pvCat">Category</label><select id="pvCat" onchange="pvSub()">' + opts(Object.keys(SET.cats), x ? x.cat : 'Vehicle hire (subcontract)', '— Choose —') + '</select></div><div><label for="pvSubS">Sub-category</label><select id="pvSubS"></select></div></div>' +
+    '<label for="pvVeh">Vehicle (optional)</label><select id="pvVeh">' + opts(SET.veh, x ? x.veh || '' : '', '— None —') + '</select>' +
+    '<div id="pvTotBox" class="pvtot"></div><div class="note warn" id="pvWarn" style="display:none"></div>' +
+    '<button class="btn w" id="pvSave" onclick="pvSave()">' + (x ? 'Save changes' : 'Save voucher') + '</button>');
+  $('pvVat').value = x && x.vat ? '5' : '0';
+  $('pvAcc').value = x ? x.acc : 'Bank';
+  $('pvM').value = x ? (x.pm || (x.chq ? 'Cheque' : 'Bank transfer')) : 'Cheque';
+  pvSub(x ? x.sub : ''); pvMeth(); pvDraw();
+}
+function pvSub(s) {
+  const c = $('pvCat').value, ss = (SET.cats[c] || []).slice(); if (s && !ss.includes(s)) ss.push(s);
+  $('pvSubS').innerHTML = opts(ss, s || (c === 'Vehicle hire (subcontract)' ? 'Bus hire' : ''), '— None —');
+}
+function pvMeth() { const m = $('pvM').value; $('pvChqW').style.visibility = m === 'Cheque' ? 'visible' : 'hidden'; if (m === 'Cash') $('pvAcc').value = 'Petty'; else if ($('pvAcc').value === 'Petty' && m === 'Cheque') $('pvAcc').value = 'Bank'; }
+function pvDraw() {
+  $('pvL').innerHTML = PV.lines.map((l, i) => '<div class="pvline"><div class="row"><input aria-label="Line ' + (i + 1) + ' description" placeholder="Description, e.g. 60 SEATER DXB CAMP" value="' + esc(l.d) + '" oninput="PV.lines[' + i + '].d=this.value;pvTot()">' +
+    (PV.lines.length > 1 ? '<button class="chip" style="flex:0 0 auto;margin-bottom:11px" onclick="pvDel(' + i + ')" aria-label="Remove line ' + (i + 1) + '">✕</button>' : '') + '</div>' +
+    '<div class="row"><div><label>From (optional)</label><input type="date" value="' + l.f + '" onchange="PV.lines[' + i + '].f=this.value"></div><div><label>To</label><input type="date" value="' + l.t + '" onchange="PV.lines[' + i + '].t=this.value"></div></div>' +
+    '<div class="row"><div style="flex:.6"><label>Qty</label><input inputmode="decimal" value="' + esc(l.q) + '" oninput="PV.lines[' + i + '].q=this.value;pvTot()"></div><div><label>Unit price</label><input inputmode="decimal" placeholder="0.00" value="' + esc(l.u) + '" oninput="PV.lines[' + i + '].u=this.value;pvTot()"></div><div><label>Amount</label><input readonly tabindex="-1" id="pvA' + i + '"></div></div></div>').join('');
+  pvTot();
+}
+function pvAdd() { PV.lines.push({ d: '', f: '', t: '', q: '1', u: '' }); pvDraw(); }
+function pvDel(i) { PV.lines.splice(i, 1); pvDraw(); }
+function pvCalc() {
+  let sub = 0, err = '';
+  const L = [];
+  PV.lines.forEach((l, i) => {
+    const q = parseFloat(String(l.q).replace(',', '.')), u = parseAmt(l.u), d = String(l.d || '').trim();
+    const ok = d && q > 0 && !isNaN(u) && u > 0;
+    if (!ok && (d || String(l.u).trim())) err = err || 'Line ' + (i + 1) + ': enter a description, a quantity and a unit price.';
+    if (ok) { const a = Math.round(q * u); sub += a; L.push({ d, f: l.f || '', t: l.t || '', q, u, a }); }
+    if (ok && l.f && l.t && l.t < l.f) err = err || 'Line ' + (i + 1) + ': the "To" date is before the "From" date.';
+  });
+  const rate = +$('pvVat').value, vat = Math.round(sub * rate / 100);
+  return { L, sub, vat, tot: sub + vat, rate, err };
+}
+function pvTot() {
+  PV.lines.forEach((l, i) => { const e = $('pvA' + i); if (e) { const q = parseFloat(String(l.q).replace(',', '.')), u = parseAmt(l.u); e.value = q > 0 && !isNaN(u) ? plain(Math.round(q * u)) : ''; } });
+  const c = pvCalc();
+  $('pvTotBox').innerHTML = '<div class="kv"><span>Subtotal</span><b>' + fmt(c.sub, 'aed') + '</b></div><div class="kv"><span>VAT (' + c.rate + '%)</span><b>' + fmt(c.vat, 'aed') + '</b></div>' +
+    '<div class="kv tot"><span>Total</span><b>' + fmt(c.tot, 'aed') + '</b></div>' + (c.tot ? '<div class="sub" style="font-style:italic;margin-top:4px">' + amountWords(c.tot) + '</div>' : '');
+}
+async function pvSave() {
+  const w = m => { const e = $('pvWarn'); e.innerHTML = m; e.style.display = 'block'; };
+  const c = pvCalc(), date = $('pvD').value, pay = $('pvPay').value.trim(), no = $('pvNo').value.trim().toUpperCase(), m = $('pvM').value;
+  const chq = m === 'Cheque' ? normChq($('pvChq').value) : '';
+  if (!pay) return w('Enter the payee.');
+  if (c.err) return w(c.err);
+  if (!c.L.length || c.tot <= 0) return w('Add at least one line with an amount.');
+  if (!date) return w('Choose the voucher date.');
+  if (isLocked(date)) return w('The books are closed up to ' + dmy(SET.lockDate) + '. Choose a later date.');
+  if (!no) return w('Enter a voucher number.');
+  if (m === 'Cheque' && !chq) return w('Enter the cheque number, or change the payment method.');
+  const other = t => !t.deleted && t.uid !== PV.uid;
+  const dupPv = TX.find(t => other(t) && t.pv === no); if (dupPv) return w('Voucher ' + esc(no) + ' already exists (' + esc(dupPv.party) + ' ' + fmt(dupPv.amt) + ').');
+  if (chq) {
+    if (SET.chqX[chq]) return w('Cheque ' + chq + ' is marked cancelled. Use another cheque number, or undo the cancel in Cheques.');
+    const dc = TX.find(t => other(t) && t.chq === chq && t.acc === 'Bank' && t.type === 'out');
+    if (dc) return w('Cheque ' + chq + ' is already used for ' + esc(dc.party || dc.desc) + ' (' + fmt(dc.amt, 'aed') + ').');
+  }
+  const now = Date.now(), old = PV.uid ? TX.find(z => z.uid === PV.uid) : null;
+  const rec = old || { uid: uid(), createdAt: now, by: CFG.device, deleted: false, rcpt: null, tr: '', clr: '' };
+  if (old && old.chq !== chq) rec.clr = '';
+  Object.assign(rec, {
+    date, acc: $('pvAcc').value, type: 'out', amt: c.tot, vat: c.vat, desc: c.L.map(l => l.d).join(' + ').slice(0, 160), party: pay,
+    cat: $('pvCat').value, sub: $('pvSubS').value, veh: $('pvVeh').value, ref: no, pv: no, pm: m, chq: rec.acc === 'Petty' ? '' : chq,
+    lines: c.L, updatedAt: now, dirty: 1
+  });
+  if (rec.acc === 'Petty') rec.chq = '';
+  await dbPut('tx', rec); if (!old) TX.push(rec);
+  render(); syncSoon(800); toast(old ? 'Voucher updated' : 'Voucher ' + no + ' saved');
+  pvView(rec.uid);
+}
+function pvHTML(t) {
+  const co = SET.co || CO_DEFAULT, sub = t.amt - (t.vat || 0), rate = t.vat && sub ? Math.round(t.vat * 100 / sub) : 0;
+  const L = t.lines && t.lines.length ? t.lines : [{ d: t.desc || t.cat || 'Payment', q: 1, u: sub, a: sub }];
+  return '<div class="pvdoc"><div class="pv-h"><div class="pv-co">' + esc(co.name) + '</div><div class="pv-t">Payment Voucher</div><div class="pv-ad">' + esc(co.addr) + '</div></div>' +
+    '<div class="pv-meta"><div><span>Voucher no</span><b>' + esc(t.pv || t.ref) + '</b></div><div style="text-align:center"><span>Date</span><b>' + dmy2(t.date) + '</b></div><div style="text-align:right"><span>Status</span><b>APPROVED</b></div></div>' +
+    '<div class="pv-pay"><span>Payee</span><b>' + esc(t.party || '') + '</b></div>' +
+    '<table class="pv-tb"><thead><tr><th>DESCRIPTION</th><th class="c">QTY</th><th class="r">UNIT PRICE (AED)</th><th class="r">AMOUNT (AED)</th></tr></thead><tbody>' +
+    L.map(l => '<tr><td><b>' + esc(l.d) + '</b>' + (l.f || l.t ? '<small>' + dmy2(l.f) + (l.f && l.t ? ' to ' : '') + dmy2(l.t) + '</small>' : '') + '</td><td class="c">' + l.q + '</td><td class="r">' + plain(l.u) + '</td><td class="r"><b>' + plain(l.a) + '</b></td></tr>').join('') +
+    '</tbody></table><div class="pv-words">Amount in words: ' + amountWords(t.amt) + '</div>' +
+    '<div class="pv-tot"><div><span>Subtotal</span><b>AED ' + plain(sub) + '</b></div><div><span>VAT (' + rate + '%)</span><b>AED ' + plain(t.vat || 0) + '</b></div><div class="g"><span>TOTAL AMOUNT</span><b>AED ' + plain(t.amt) + '</b></div></div>' +
+    '<div class="pv-pm"><span>Payment method</span><b>' + esc(t.pm || (t.chq ? 'Cheque' : t.acc === 'Petty' ? 'Cash' : 'Bank transfer')) + '</b>' + (t.chq ? '<span>Notes</span><div>CHQ-' + esc(t.chq) + '</div>' : '') + '</div>' +
+    '<div class="pv-sig"><div>Prepared By</div><div>Approved By</div><div>Received By</div></div></div>';
+}
+function pvView(uid) {
+  const t = TX.find(z => z.uid === uid); if (!t) return;
+  open2('<div class="grab"></div><div class="h"><span>' + esc(t.pv || 'Voucher') + '</span><button class="chip" onclick="close2()">Close</button></div>' +
+    '<div class="pvwrap">' + pvHTML(t) + '</div>' +
+    '<div class="row"><button class="btn" onclick="pvPrint(\'' + uid + '\')">Print / save PDF</button>' + (isLocked(t.date) ? '' : '<button class="btn g" onclick="pvForm(\'' + uid + '\')">Edit</button>') + '</div>');
+}
+function pvPrint(uid) {
+  const t = TX.find(z => z.uid === uid); if (!t) return;
+  $('pvPrint').innerHTML = pvHTML(t);
+  const prevTitle = document.title; document.title = (t.pv || 'Voucher').replace(/[\/\\]/g, '-') + ' ' + (t.party || '');
+  document.body.classList.add('pvp');
+  const done = () => { document.body.classList.remove('pvp'); document.title = prevTitle; window.removeEventListener('afterprint', done); };
+  window.addEventListener('afterprint', done);
+  setTimeout(() => { window.print(); setTimeout(done, 1500); }, 60);
+}
+
+/* ---------------- bank statement import ---------------- */
+const MON3 = { JAN: 1, FEB: 2, MAR: 3, APR: 4, MAY: 5, JUN: 6, JUL: 7, AUG: 8, SEP: 9, OCT: 10, NOV: 11, DEC: 12 };
+function parseDate2(s) {
+  s = String(s || '').replace(/"/g, '').trim(); let m;
+  if ((m = s.match(/^(\d{1,2})[-\/ ]([A-Za-z]{3})[A-Za-z]*[-\/ ](\d{2,4})$/))) { const mo = MON3[m[2].toUpperCase()]; if (!mo) return ''; let y = m[3]; if (y.length === 2) y = '20' + y; return y + '-' + pad2(mo) + '-' + pad2(m[1]); }
+  return parseDMY(s);
+}
+function money2(s) {
+  s = String(s == null ? '' : s).replace(/"/g, '').trim(); if (!s || s === '-') return null;
+  const neg = /dr$/i.test(s) || /^-|^\(.*\)$/.test(s);
+  const v = parseAmt(s.replace(/(cr|dr)$/i, '').replace(/^-|[()]/g, '').trim());
+  return isNaN(v) ? NaN : (neg ? -v : v);
+}
+function parseStmt(txt) {
+  const lines = String(txt || '').split(/\r?\n/).filter(l => l.trim());
+  let H = null; const rows = [], skipped = [];
+  for (const raw of lines) {
+    const c = raw.split('\t').map(x => x.trim().replace(/^"+|"+$/g, '').trim());
+    if (!H) {
+      const low = c.map(x => x.toLowerCase()), fi = re => low.findIndex(x => re.test(x));
+      const di = fi(/date/), wi = fi(/withdraw|debit|paid out|money out/), pi = fi(/deposit|credit|paid in|money in/), bi = fi(/balance/);
+      if (di >= 0 && wi >= 0 && pi >= 0) H = { di, de: fi(/desc|narrat|particular|detail|remark/), ci: fi(/cheque|chq|check/), wi, pi, bi };
+      continue;
+    }
+    const date = parseDate2(c[H.di]); if (!date) continue;
+    const w = money2(c[H.wi]), d = money2(c[H.pi]), b = H.bi >= 0 ? money2(c[H.bi]) : null;
+    if ((w == null || isNaN(w)) && (d == null || isNaN(d))) { skipped.push(raw.slice(0, 70)); continue; }
+    const desc = H.de >= 0 ? (c[H.de] || '') : '';
+    let chq = H.ci >= 0 ? normChq(c[H.ci]) : '';
+    if (!chq) { const m = desc.match(/che?que\s*(?:no\.?\s*)?(\d{4,})/i); if (m) chq = normChq(m[1]); }
+    rows.push({ date, desc, chq, w: Math.abs(w || 0), d: Math.abs(d || 0), b: b == null || isNaN(b) ? null : b });
+  }
+  return { H, rows, skipped };
+}
+const normSd = s => String(s || '').toUpperCase().replace(/[0-9.,:\/\-#]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 45);
+function autoCat(r, type, amt) {
+  const u = r.desc.toUpperCase(), base = { cat: '', sub: '', desc: r.desc.slice(0, 140), party: '', vat: 0 };
+  if (type === 'in' && /RETURN/.test(u)) return Object.assign(base, { cat: 'Returned cheque', desc: 'Returned cheque ' + (r.chq || '') + (/SIGNATURE/.test(u) ? ' – signature missing' : /FUND/.test(u) ? ' – insufficient funds' : '') });
+  if (/CHARGE|\bFEE\b|COMMISSION/.test(u)) {
+    const sub = /MAINT/.test(u) ? 'Maintenance fee' : /CHQ_ISSUE|CHEQUE BOOK|CHQ BOOK/.test(u) ? 'Cheque book' : /TELLER/.test(u) ? 'Teller charges' : /REMIT/.test(u) ? 'Remittance charge' : /DELIVERY/.test(u) ? 'Delivery charge' : '';
+    return Object.assign(base, { cat: 'Bank charges', sub, desc: 'Bank charge' + (sub ? ' – ' + sub.toLowerCase() : ''), party: 'Bank', vat: /VAT/.test(u) ? vatIncl(amt) : 0 });
+  }
+  const key = normSd(r.desc);
+  if (key.length > 12 && !/^(CLG|HOUSE|INWARD CLG)/.test(key)) {
+    const prev = live().filter(t => t.sd && t.cat && t.cat !== 'Cheque payments' && t.type === type && normSd(t.sd) === key).sort(order).pop();
+    if (prev) return Object.assign(base, { cat: prev.cat, sub: prev.sub, desc: prev.desc, party: prev.party, learned: 1 });
+  }
+  if (type === 'out' && /CASH WITHDRAWAL|\bATM\b/.test(u)) return Object.assign(base, { desc: 'Cash withdrawal' + (r.chq ? ' chq ' + r.chq : '') });
+  if (type === 'out' && r.chq) return Object.assign(base, { cat: 'Cheque payments', sub: 'To be assigned', desc: (/HOUSE/.test(u) ? 'House cheque ' : 'Cheque ') + r.chq });
+  return base;
+}
+let STM = null;
+function stmtForm() {
+  open2('<div class="grab"></div><div class="h"><span>Import bank statement</span><button class="chip" onclick="close2()">Close</button></div>' +
+    '<div class="note">Copy the statement rows from Excel, Google Sheets or online banking, <b>including the header row</b> (Date, Description, Cheque No., Withdrawal, Deposit, Balance), and paste them here. Nothing is saved until you confirm.</div>' +
+    '<textarea id="stT" placeholder="Paste statement rows here" oninput="STM=null;$(\'stOut\').innerHTML=\'\';$(\'stBtn\').textContent=\'Check statement\'"></textarea>' +
+    '<div id="stOut"></div><button class="btn w" id="stBtn" onclick="STM?stmtApply():stmtCheck()">Check statement</button>');
+}
+function stmtCheck() {
+  const out = $('stOut'), p = parseStmt($('stT').value);
+  if (!p.H) { out.innerHTML = '<div class="note warn">The header row is missing. Copy it too: it tells the app which column is Withdrawal, Deposit and Balance.</div>'; return; }
+  if (!p.rows.length) { out.innerHTML = '<div class="note warn">No transactions were found under the header. Check that dates look like 01-AUG-2026 or 01/08/2026.</div>'; return; }
+  const R = p.rows;
+  let open = null, bad = [];
+  if (R[0].b != null) { open = R[0].b + R[0].w - R[0].d; let run = open; R.forEach((r, i) => { run = run - r.w + r.d; if (r.b != null && run !== r.b) { bad.push(r); run = r.b; } }); }
+  const L = live(), used = new Set();
+  const plan = R.map(r => {
+    const type = r.d > 0 ? 'in' : 'out', amt = r.d > 0 ? r.d : r.w, bk = r.date + '|' + type + '|' + amt + '|' + (r.b == null ? '' : r.b);
+    const base = { r, type, amt, bk };
+    const dup = L.find(t => t.bk === bk); if (dup) return Object.assign(base, { act: 'skip', t: dup });
+    if (r.chq) {
+      const t = L.find(z => z.acc === 'Bank' && z.chq === r.chq && z.type === type && !z.bk && !used.has(z.uid));
+      if (t) { used.add(t.uid); return Object.assign(base, { act: t.amt === amt ? 'match' : 'diff', t }); }
+    }
+    const t2 = L.find(z => z.acc === 'Bank' && z.type === type && z.amt === amt && !z.bk && !used.has(z.uid) && (!z.chq || z.chq === r.chq) && dayDiff(z.date, r.date) <= 5 && !(z.chq && !z.clr && z.date > r.date));
+    if (t2) { used.add(t2.uid); return Object.assign(base, { act: 'match', t: t2 }); }
+    if (isLocked(r.date)) return Object.assign(base, { act: 'locked' });
+    return Object.assign(base, { act: 'new', a: autoCat(r, type, amt) });
+  });
+  const n = k => plan.filter(x => x.act === k).length;
+  const first = R[0].date, last = R[R.length - 1].date, close = R[R.length - 1].b;
+  const hasBefore = L.some(t => t.acc === 'Bank' && t.date < first);
+  const offerOb = open != null && !hasBefore && SET.ob.Bank !== open;
+  STM = { plan, open, close, last, offerOb };
+  const W = R.reduce((s, r) => s + r.w, 0), D = R.reduce((s, r) => s + r.d, 0);
+  const lab = { match: ['ok', 'Matched'], new: ['soon', 'New'], skip: ['', 'Already in books'], diff: ['bad', 'Amount differs'], locked: ['bad', 'Closed period'] };
+  out.innerHTML =
+    '<div class="card" style="margin-top:10px"><div class="h">' + R.length + ' lines · ' + dmy(first) + ' to ' + dmy(last) + '</div>' +
+    '<div class="kv"><span>Withdrawals</span><b class="cout">' + fmt(W) + '</b></div><div class="kv"><span>Deposits</span><b class="cin">' + fmt(D) + '</b></div>' +
+    (close != null ? '<div class="kv"><span>Closing balance</span><b>' + fmt(close, 'aed') + '</b></div>' : '') +
+    (open != null ? (bad.length ? '<div class="note warn">The running balance does not add up on ' + bad.length + ' line(s), first on ' + dmy(bad[0].date) + '. A line may be missing from what you pasted.</div>' : '<div class="note">✓ Every running balance adds up. Balance before the first line: ' + fmt(open, 'aed') + '.</div>') : '<div class="note warn">No Balance column, so the totals cannot be checked line by line.</div>') +
+    '<div class="grid2" style="margin-top:8px"><div><span>Matched to your entries</span><b class="cin">' + n('match') + '</b></div><div><span>New entries to add</span><b>' + n('new') + '</b></div><div><span>Already imported</span><b>' + n('skip') + '</b></div><div><span>Need checking</span><b class="' + (n('diff') + n('locked') ? 'cout' : '') + '">' + (n('diff') + n('locked')) + '</b></div></div>' +
+    (offerOb ? '<label style="display:flex;gap:8px;align-items:center;margin-top:12px;color:var(--ink)"><input type="checkbox" id="stOb" checked style="width:auto;min-height:0;margin:0"> Set Bank opening balance to ' + fmt(open, 'aed') + '</label>' : '') +
+    '</div><div class="bookwrap" style="margin-bottom:12px">' + plan.map(x => {
+      const l = lab[x.act];
+      return '<div class="it"><span class="ic ' + x.type + '">' + (x.type === 'in' ? '+' : '−') + '</span><span class="mid"><b>' + esc(x.act === 'new' ? (x.a.desc || x.r.desc) : x.t ? (x.t.party || x.t.desc) : x.r.desc) + '</b><small>' + dmy(x.r.date) + (x.r.chq ? ' · chq ' + x.r.chq : '') + (x.act === 'new' ? ' · ' + esc(x.a.cat || 'Uncategorised') + (x.a.learned ? ' (learned)' : '') : '') +
+        (x.act === 'diff' ? ' · book ' + fmt(x.t.amt) : '') + '</small><span class="badge ' + l[0] + '">' + l[1] + '</span></span><span class="amt ' + x.type + '">' + fmt(x.amt) + '</span></div>';
+    }).join('') + '</div>' +
+    (n('diff') ? '<div class="note warn">' + n('diff') + ' cheque(s) have a different amount in the books. They are left unchanged. Open them in Cheques and correct the amount, then import again.</div>' : '');
+  $('stBtn').textContent = n('new') + n('match') ? 'Import ' + (n('new') + n('match')) + ' lines' : 'Nothing new to import';
+  if (!(n('new') + n('match'))) { STM = null; $('stBtn').onclick = () => close2(); }
+}
+async function stmtApply() {
+  if (!STM) return;
+  const now = Date.now(), ch = []; let k = 0;
+  for (const x of STM.plan) {
+    if (x.act === 'match') {
+      const t = x.t; t.clr = t.clr && t.clr <= x.r.date ? t.clr : x.r.date; t.bk = x.bk; t.sd = x.r.desc; if (!t.chq && x.r.chq && t.type === 'out') t.chq = x.r.chq;
+      t.updatedAt = now; t.dirty = 1; ch.push(t);
+    } else if (x.act === 'new') {
+      const a = x.a, r = x.r;
+      ch.push({ uid: uid(), date: r.date, acc: 'Bank', type: x.type, amt: x.amt, vat: a.vat || 0, desc: a.desc, party: a.party, cat: a.cat, sub: a.sub, veh: '',
+        ref: r.chq ? 'CHQ-' + r.chq : nextRef('BNK'), chq: r.chq, clr: r.date, bk: x.bk, sd: r.desc, tr: '', rcpt: null, by: CFG.device + ' (statement)',
+        createdAt: now + (k++), updatedAt: now, dirty: 1, deleted: false });
+    }
+  }
+  if (STM.offerOb && $('stOb') && $('stOb').checked) { SET.ob.Bank = STM.open; await saveSet(); }
+  await dbPutMany(ch); ch.forEach(t => { if (!TX.includes(t)) TX.push(t); });
+  const exp = STM.close != null ? stmtBal(STM.last) : null, close = STM.close, last = STM.last;
+  STM = null; render(); syncSoon(800);
+  open2('<div class="grab"></div><div class="h"><span>Statement imported</span><button class="chip" onclick="close2()">Done</button></div>' +
+    '<div class="kv"><span>Lines saved</span><b>' + ch.length + '</b></div>' +
+    (close != null ? '<div class="kv"><span>Bank statement on ' + dmy(last) + '</span><b>' + fmt(close, 'aed') + '</b></div><div class="kv"><span>Your books say the bank should show</span><b>' + fmt(exp, 'aed') + '</b></div>' +
+      '<div class="kv tot"><span>Difference</span><b class="' + (exp === close ? 'cin' : 'cout') + '">' + fmt(close - exp, 'aed') + '</b></div>' +
+      '<div class="note ' + (exp === close ? '' : 'warn') + '">' + (exp === close ? '✓ The books and the bank agree exactly.' : 'The books and the bank differ. Check the opening balance, and any Bank entries you made by hand around these dates.') + '</div>' : '') +
+    '<button class="btn w" onclick="close2();chqFilter=\'pending\';show(\'chq\')">See cheques to clear</button>');
+}
+
+/* ---------------- company header ---------------- */
+async function saveCo() {
+  const n = $('coName').value.trim(), a = $('coAddr').value.trim();
+  if (!n) return toast('Enter the company name');
+  SET.co = { name: n, addr: a }; await saveSet(); toast('Voucher header saved');
+}
+function mergeSettings(s) {
+  if (!s) return;
+  if (s.cats) Object.keys(s.cats).forEach(k => { SET.cats[k] = Array.from(new Set((SET.cats[k] || []).concat(s.cats[k] || []))); });
+  if (Array.isArray(s.veh)) s.veh.forEach(v => { if (!SET.veh.includes(v)) SET.veh.push(v); });
+  if (s.vinfo) SET.vinfo = Object.assign({}, SET.vinfo || {}, s.vinfo);
+  if (s.ob) SET.ob = Object.assign({}, SET.ob, s.ob);
+  if (s.chqX) SET.chqX = Object.assign({}, SET.chqX || {}, s.chqX);
+  if (s.co) SET.co = s.co;
+  if (s.lockDate) SET.lockDate = s.lockDate;
+}
+
+start();
+
+</script>
+</body>
+</html>
